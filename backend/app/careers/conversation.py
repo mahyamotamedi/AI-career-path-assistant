@@ -1,5 +1,6 @@
 """Validated observations; Python controls questions and profile publication."""
 import json
+import re
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
@@ -68,6 +69,23 @@ def _interpret(session: SessionState, message: str, draft: dict, correction=Fals
     return res.data
 
 
+def _quoted(evidence: str, message: str) -> bool:
+    """True if evidence is quoted from message, ignoring quote marks, punctuation, spacing and ZWNJ.
+
+    Elided quotes ("A ... B") are accepted when every piece appears in the message in order.
+    """
+    def squash(text: str) -> str:
+        return re.sub(r"[\s«»\"'“”‘’.,،؛;:!?؟…()]+", "", tax_module.normalize_text(text))
+    pieces = [p for p in (squash(x) for x in re.split(r"\.{2,}|…", evidence)) if p]
+    text, pos = squash(message), 0
+    for piece in pieces:
+        pos = text.find(piece, pos)
+        if pos < 0:
+            return False
+        pos += len(piece)
+    return bool(pieces)
+
+
 def _merge(draft: dict, obs: Observation, message: str) -> dict:
     tax = tax_module.get_taxonomy()
     result = {**draft, "evidence": dict(draft.get("evidence", {}))}
@@ -83,7 +101,7 @@ def _merge(draft: dict, obs: Observation, message: str) -> dict:
         result["knowledge_complete"] = True
     for skill in obs.skills:
         # Evidence must be quoted from the current user turn, never an invented rationale.
-        if skill.evidence not in message:
+        if not _quoted(skill.evidence, message):
             continue
         for cid in map_skills([skill.skill], tax):
             result["evidence"][cid] = {"status": skill.status, "quote": skill.evidence}
@@ -116,6 +134,10 @@ def handle_message(session: SessionState, message: str) -> ChatResponse:
             return response(MESSAGES["invalid"])
         try:
             candidate = _merge(session.draft, _interpret(session, message, session.draft), message)
+            # Accepted skill evidence in reply to the skills question answers it, even if
+            # the model leaves knowledge_complete unset (seen on the real gateway).
+            if candidate.get("asked_knowledge") and candidate["evidence"] != session.draft.get("evidence", {}):
+                candidate["knowledge_complete"] = True
             conflicts = _conflicts(candidate)
         except P2Error as exc:
             return response(str(exc))
@@ -131,6 +153,7 @@ def handle_message(session: SessionState, message: str) -> ChatResponse:
             question = f"دربارهٔ {label} اطلاعات ناسازگار است؛ تجربهٔ عملی شما در این مهارت چیست؟"
         elif not candidate.get("knowledge_complete"):
             question = "کدام مهارت‌ها را عملاً انجام داده‌اید و کدام را فقط شنیده‌اید؟"
+            candidate["asked_knowledge"] = True
         if question is None:
             profile = _profile(candidate)
             session.profile = profile
@@ -183,7 +206,7 @@ def apply_correction(session: SessionState, message: str) -> CareerProfile:
         # A repeated explicit observation is a successful no-op, not an ambiguity.
         # Unknown labels or unsupported evidence must still fail safely.
         accepted_skill = any(
-            item.evidence in message and map_skills([item.skill], tax_module.get_taxonomy())
+            _quoted(item.evidence, message) and map_skills([item.skill], tax_module.get_taxonomy())
             for item in obs.skills
         )
         accepted_field = any((obs.target_level, obs.current_level, obs.beginner)) or (

@@ -56,7 +56,7 @@ flowchart LR
 ## Ranking design
 
 - **Baseline:** BM25 (`rank_bm25`) — query = resume skills + roles, docs = posting title + requirements.
-- **Hybrid:** `score = w_skill · skill_id overlap + w_embed · cosine(embed(resume), embed(posting))`, optional LLM re-rank of the top 20 (`LLM_RERANK`). Weights live in `config.py` (`w_skill_overlap`, `w_embedding`, `llm_rerank_top_k`). Embedding failure → overlap only.
+- **Hybrid:** `score = (w_skill · skill_score + w_embed · cosine(embed(resume), embed(posting)) + w_seniority · seniority_fit) / Σw`. Weights live in `config.py` (`w_skill_overlap`, `w_embedding`, `w_seniority`). Embedding failure → the embedding term is dropped. The LLM re-rank (`llm_rerank`, `llm_rerank_top_k`, `RERANK_SYSTEM`) is config only and **not implemented**.
 - Matched/missing = posting `skill_ids` ∩ / − resume `skill_ids` (deterministic).
 
 ## Evaluation protocol

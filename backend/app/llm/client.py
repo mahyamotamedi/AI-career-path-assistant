@@ -163,7 +163,7 @@ def embed(session_id: str, texts: list[str], model: str | None = None) -> LLMRes
         return _failure("not_configured")
     _attempt(session_id)
     try:
-        resp = client.embeddings.create(model=model, input=texts)
+        resp = client.embeddings.create(model=model, input=texts, timeout=settings.embed_timeout_s)
     except Exception as exc:
         _record_usage(session_id, model, None)
         return LLMResult(False, error=_classify(exc))

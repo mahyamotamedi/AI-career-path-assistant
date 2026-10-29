@@ -16,7 +16,10 @@ def _stub_roadmap() -> Roadmap:
 
 @router.post("/roadmap", response_model=Roadmap)
 def make_roadmap(profile: CareerProfile) -> Roadmap:
-    return run_or_stub(lambda: graph.compute_roadmap(profile, get_taxonomy()), _stub_roadmap)
+    try:
+        return run_or_stub(lambda: graph.compute_roadmap(profile, get_taxonomy()), _stub_roadmap)
+    except ValueError:
+        raise HTTPException(422, "برای این نقش شغلی نقشهٔ راه در دسترس نیست.") from None
 
 
 @router.post("/roadmap/correct", response_model=Roadmap)

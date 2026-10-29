@@ -15,9 +15,12 @@ class Settings(BaseSettings):
     extract_model: str = ""
     embed_model: str = ""
     llm_timeout_s: float = 30.0
+    # Embedding a batch of postings takes longer than a chat turn (8 s timed out on the real gateway).
+    embed_timeout_s: float = 60.0
 
     # One shared budget across JSON attempts, including repair. No capability probes.
-    llm_json_budget_s: float = 8.0
+    # 8 s timed out on cold real-gateway calls (2-4 s typical, 8.8 s seen).
+    llm_json_budget_s: float = 20.0
     llm_send_temperature: bool = False
     llm_json_mode: bool = True
     # Operator-provided estimates in USD per million tokens; no unknown-model fallback.
@@ -33,7 +36,7 @@ class Settings(BaseSettings):
     w_embedding: float = 0.4
     w_seniority: float = 0.1  # weights are renormalised over the signals that are available
     skill_jaccard_blend: float = 0.2  # skill_score = (1 - blend) * coverage + blend * jaccard
-    embed_batch_size: int = 64
+    embed_batch_size: int = 8  # the real gateway drops batches of >=16
     llm_rerank: bool = False
     llm_rerank_top_k: int = 20
 

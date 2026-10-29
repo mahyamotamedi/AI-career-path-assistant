@@ -12,9 +12,9 @@ cp .env.example .env     # fill LLM_BASE_URL, LLM_API_KEY, model names
 docker compose up        # backend :8000, frontend :5173
 ```
 
-Without Docker: `make install && make dev`. Other targets: `make test`, `make collect`, `make eval`.
+Without Docker: `make install && make dev` (the Makefile picks `.venv/Scripts` on Windows and `.venv/bin` elsewhere; it needs GNU make, so on Windows without make use `docker compose up`). Other targets: `make test`, `make collect`, `make eval`.
 `make eval` ranks the frozen 80-posting snapshot for 3 synthetic resumes with BM25 and the hybrid ranker, prints P@5 / nDCG@10 and the top 5 per method, and writes `backend/data/eval/results.md`. Hybrid numbers need `LLM_BASE_URL`, `LLM_API_KEY` and `EMBED_MODEL` in `.env`; without them it runs on skill overlap + seniority only and says so.
-Until the real components exist, every endpoint falls back to `backend/data/fixtures/` (look for `STUB` in the logs).
+All endpoints use the real components; the backend no longer serves fixtures (`STUB` would appear in the logs if it did). The first hybrid match embeds all postings once (~40 s, then cached in `backend/data/jobs/embeddings.npz`).
 
 ## Endpoints (`/api`)
 
@@ -26,9 +26,9 @@ Interactive docs: http://localhost:8000/docs
 
 | Purpose | Model |
 |---|---|
-| Chat | _TBD (CHAT_MODEL)_ |
-| Extraction | _TBD (EXTRACT_MODEL)_ |
-| Embeddings | _TBD (EMBED_MODEL)_ |
+| Chat | `gpt-5.4-mini` (`CHAT_MODEL`) |
+| Extraction | `gpt-5.4-mini` (`EXTRACT_MODEL`) |
+| Embeddings | `text-embedding-3-large` (`EMBED_MODEL`) |
 
 ## Data sources
 

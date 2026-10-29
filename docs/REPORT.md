@@ -1,17 +1,19 @@
 # Technical Report (1–2 pages)
 
 ## Architecture
-_Short description + diagram reference (see ARCHITECTURE.md)._
+FastAPI backend + React/Vite RTL frontend (diagram and contracts in `docs/ARCHITECTURE.md`). The LLM is used only for conversation and extraction, always through `llm.client.chat_json` with a Pydantic model; the roadmap (taxonomy + prerequisite graph), job filters, dedup, scoring and explanations are plain deterministic code. Module A: chat → typed observations → profile validated against the taxonomy (unknown IDs dropped, skills accepted only with evidence quoted from the user's own message) → `compute_roadmap`. Module B: PDF/DOCX text → `ResumeProfile` → `map_skills` → filters → BM25 or hybrid ranking → top 10 with matched/missing skills. Sessions are in memory only; resume text, profiles and chat content are never logged or written to disk.
 
 ## Models & why
 | Task | Model | Why |
 |---|---|---|
-| Chat | | |
-| Extraction | | |
-| Embeddings | | |
+| Chat | `gpt-5.4-mini` | Persian conversation turns as JSON observations; JSON-object mode works on the gateway; 2–5 s per call measured |
+| Extraction | `gpt-5.4-mini` | Same model for resume → `ResumeProfile`; one model keeps cost and prompts simple |
+| Embeddings | `text-embedding-3-large` | Multilingual (Persian + English postings); used for the hybrid ranking term |
+
+All models are reached through the organiser's OpenAI-compatible gateway (`https://api.metisai.ir/openai/v1`), configured in `.env`. Gateway limits found on 29 October 2026: embedding batches of ≥16 postings fail (connection error after ~55 s) while batches of 8 succeed in ~4 s, so `embed_batch_size` is 8; cold chat calls can take ~9 s, so the JSON budget is 20 s.
 
 ## Taxonomy design
-_Roles, domains, concepts, prerequisite edges, how levels work, how resources were verified._
+12 roles in 4 domains (data 4: data analyst, data scientist, ML engineer, data engineer; software 3: backend, frontend, DevOps; business 3: financial analyst, recruiter, product manager; marketing 2: digital marketer, SEO specialist), 154 concepts and 195 prerequisite edges (`backend/data/taxonomy/*.yaml`). Each concept has Persian and English labels plus aliases used for deterministic skill mapping. Role levels are cumulative: the senior target includes the mid and junior concept sets. `validate_taxonomy` checks IDs and references and rejects prerequisite cycles; it reports 0 errors and 0 warnings. The roadmap is targets + transitive prerequisites − known concepts, laid out by longest-path layer in topological order. Knowing a concept implies its prerequisites; `heard_of_only` never counts as known. Resources: 320 entries (281 English, 39 Persian; 230 articles, 52 docs, 38 courses). `scripts/verify_resources.py` checks every URL (HEAD, then GET) and writes the `verified` flag back: 303 verified, 17 unverified, and unverified resources are never shown. Every concept has at least one verified resource.
 
 ## Data collection (Module B, P3)
 80 real postings (40 each) from **jobinja.ir** (server-rendered HTML + JSON-LD; keyword listings, then detail pages) and **jobvision.ir** (public JSON list endpoint `JobPost/List` called with a POST body, plus the server-rendered detail page). Keywords span software, data, business and marketing so the sample covers the taxonomy domains. Collection is polite: robots.txt is checked before every request with a wildcard-aware matcher (jobvision blocks any URL containing `?`; its API host allows only `JobPost/List`), at least 3 s between requests per host, an identifying User-Agent, a disk cache, no logins or cookies, and the API's disallowed detail endpoint is never called. Postings are normalised to one schema (title, company, canonical city, remote, seniority from title keywords then years, requirement lines, `skill_ids`), then deduplicated (same URL, or same company and city with a normalised/fuzzy title match). Skill mapping uses taxonomy labels and aliases only (no LLM): 78 of 80 postings have at least one mapped skill.
@@ -25,31 +27,47 @@ _Roles, domains, concepts, prerequisite edges, how levels work, how resources we
 | Method | P@5 | nDCG@10 |
 |---|---|---|
 | BM25 baseline | 1.000 | 0.890 |
-| Hybrid (ours) [no embeddings: skills+seniority] | 0.600 | 0.580 |
+| Hybrid (ours) | 0.733 | 0.790 |
 | Skills only (ablation) | 0.600 | 0.559 |
+| Embeddings only (ablation) | 1.000 | 0.897 |
 
-3 synthetic resumes x 80 labelled postings; embeddings NOT available (no gateway key): hybrid = skill overlap + seniority fit only.
+3 synthetic resumes x 80 labelled postings; embeddings used (`text-embedding-3-large`, real gateway, 29 October 2026).
 
 Per resume (P@5 / nDCG@10):
 
-| Resume | #relevant | BM25 baseline | Hybrid (ours) [no embeddings: skills+seniority] | Skills only (ablation) |
-|---|---|---|---|---|
-| r1_data_analyst_junior | 8 | 1.00 / 0.82 | 0.60 / 0.50 | 0.60 / 0.49 |
-| r2_backend_python_mid | 9 | 1.00 / 0.85 | 0.20 / 0.37 | 0.20 / 0.33 |
-| r3_digital_marketing_junior | 16 | 1.00 / 1.00 | 1.00 / 0.86 | 1.00 / 0.86 |
+| Resume | #relevant | BM25 baseline | Hybrid (ours) | Skills only (ablation) | Embeddings only (ablation) |
+|---|---|---|---|---|---|
+| r1_data_analyst_junior | 8 | 1.00 / 0.82 | 0.60 / 0.76 | 0.60 / 0.49 | 1.00 / 0.84 |
+| r2_backend_python_mid | 9 | 1.00 / 0.85 | 0.60 / 0.61 | 0.20 / 0.33 | 1.00 / 0.86 |
+| r3_digital_marketing_junior | 16 | 1.00 / 1.00 | 1.00 / 1.00 | 1.00 / 0.86 | 1.00 / 1.00 |
 
-**Reading the result.** In this run embeddings were not available (no gateway key), so "Hybrid" is skill overlap + seniority fit, and it did **not** beat BM25 (BM25 P@5 1.00 vs 0.60). Two causes are visible in the top-5 lists: postings with only two or three mapped skills get full coverage and outrank real analyst/Python postings (Data Engineer / Data Scientist above Data Analyst), and the title-based labels favour BM25, which also matches titles. The embedding term, which compares the whole resume with the whole posting text, is the part meant to fix this; the table must be re-run with embeddings before drawing conclusions about the hybrid method.
+**Reading the result.** With real embeddings, the hybrid ranker improves on skills-only (nDCG@10 0.559 → 0.790) but still does **not** beat BM25 (P@5 0.733 vs 1.000, nDCG@10 0.790 vs 0.890). The embeddings-only ablation matches BM25 on P@5 and is slightly better on nDCG@10 (0.897 vs 0.890). The skill-overlap term is what pulls hybrid down: postings with only two or three mapped skills get full coverage and outrank real analyst/Python postings (Data Engineer and Data Scientist above Data Analyst). The title-based labels also favour title-matching methods such as BM25. Weights were not tuned on these resumes, and doing so would overfit a 3-resume set.
 
 ## Cost per session
-_Average tokens and estimated USD for a typical session of each module._
+Measured on the real gateway on 29 October 2026 (`/api/usage`). Prices (metisai price list, USD per 1M tokens): `gpt-5.4-mini` $0.8625 input / $5.175 output; `text-embedding-3-large` $0.143 input.
 
-**Module B latency (P3):** ranking all 80 postings takes ~10 ms for BM25 and, with embeddings, ~10 ms of local compute plus gateway calls: one-time embedding of the 80 posting texts (2 batched calls, then cached on disk) and one call for the resume per request. Measured here with a fake gateway only (cold 0.008 s, warm 0.007 s); real gateway latency was not measured because no key was available — expected well under the 60 s limit (NF-02). A hidden-resume check (junior React developer, not an eval role; DOCX through `/api/resume` with the LLM answer stubbed) returned React/front-end postings first for both methods.
+| Session | Calls | Prompt tokens | Completion tokens | Est. cost (USD) |
+|---|---|---|---|---|
+| Module A, scenario 1 (2 chat turns + 1 correction) | 3 | 6,848 | 195 | 0.0069 |
+| Module A, scenario 2 (2 chat turns; 6 runs) | 2 | 4,562 | ~206 | 0.0050–0.0064 |
+| Module B, scenario 3 (resume upload + 4 hybrid matches, warm posting cache) | 5 | 620 (468 chat + 152 embedding) | 77 | 0.0008 |
+
+A typical session therefore costs well under one US cent. The one-time posting embedding (80 postings, 10 batches of 8) is cached on disk and shared by all sessions. That one-time cost is about 19k tokens (8 postings measured at 1,921 tokens), or roughly $0.003 (estimated, not measured end to end). Cached-input and web-search prices are not used by the app.
+
+**Module B latency (P3):** ranking all 80 postings takes ~10 ms for BM25 and, with embeddings, ~10 ms of local compute plus gateway calls: one-time embedding of the 80 posting texts (10 batches of 8, then cached on disk) and one call for the resume per request. Real gateway (29 October 2026): a hybrid match with a warm posting cache takes 0.6–2.2 s (one 17.9 s outlier), resume upload and extraction 2–5 s. A cold cache adds ~40 s once, for 10 embedding batches. A hidden-resume check (junior React developer, not an eval role; DOCX through `/api/resume` with the LLM answer stubbed) returned React/front-end postings first for both methods.
 
 ## AI-assistant disclosure
-_Which AI coding assistants were used and for what._
+- **Claude Code:** used across the project (see README; per-workstream details to be filled in by each owner), including a final completion pass on 29 October 2026. That pass covered tolerant evidence-quote matching (quote marks and "..."-elided quotes), chat completion when the LLM omits `knowledge_complete`, timeout and embedding-batch fixes found on the real gateway, a safe 422 for unknown roles, level from stated years, the Windows-aware Makefile, and filling this report.
+- **Codex:** the P2 LLM layer (see "P2 implementation status" below).
+
+Humans reviewed and merged all changes; the evaluation labels were spot-checked by hand.
 
 ## Limitations
-_Small taxonomy, LLM errors, language coverage, etc._ **P3 (jobs & ranking):** the 80 postings are Tehran-heavy with only 5 remote jobs and come from two sites; skill coverage depends on taxonomy aliases (generic or unlisted skills such as Google Search Console are not mapped, and a posting with few mapped skills can outrank richer ones); the evaluation set is small (3 resumes) with rule-based labels that were only spot-checked; hybrid numbers need an embeddings run; postings are a snapshot from 29 October 2026; incremental refresh (B-11: `make refresh`, a compose `collector` service every 5 h, 1 h listing cache, upsert by id, 60-day expiry, failed sources keep their old postings, lock file, atomic write) is implemented and unit-tested but has not yet been run against the live sites.
+**General:** the taxonomy is small (12 roles, 154 concepts), and skills outside it are ignored. The LLM is non-deterministic. Before the elided-quote fix, 2 of 5 real runs of scenario 2 kept only one of four stated skills; after it, 5 of 5 runs kept all four. The gateway is sometimes slow (a 20 s timeout was hit once) and then shows a Persian "try again" message. The completion message mentions "junior" even for non-beginners. **P3 (jobs & ranking):** the 80 postings are Tehran-heavy with only 5 remote jobs and come from two sites; skill coverage depends on taxonomy aliases (generic or unlisted skills such as Google Search Console are not mapped, and a posting with few mapped skills can outrank richer ones); the evaluation set is small (3 resumes) with rule-based labels that were only spot-checked; hybrid does not beat BM25 even with embeddings (see Evaluation results); postings are a snapshot from 29 October 2026; incremental refresh (B-11: `make refresh`, a compose `collector` service every 5 h, 1 h listing cache, upsert by id, 60-day expiry, failed sources keep their old postings, lock file, atomic write) is implemented and unit-tested but has not yet been run against the live sites.
+
+## Verification update (29 October 2026, Windows host)
+
+The blockers listed in the P2 section below are resolved. With the dependencies installed, `pytest -q` gives 213 passed, `validate_taxonomy` is clean, and frontend `tsc --noEmit` and vitest (28) pass. All three demo scenarios were run against the real gateway; see Cost per session and Limitations for the measured results.
 
 ## P2 implementation status (29 October 2026)
 

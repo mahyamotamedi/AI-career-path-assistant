@@ -82,8 +82,12 @@ def parse_resume(session_id: str, text: str) -> ResumeProfile:
     if not res.ok:
         raise P2Error(res.error.kind if res.error else "api")
     extraction = res.data
-    # The public contract uses zero when no years are stated; do not infer level from it.
     values = extraction.model_dump()
-    if values["years_experience"] is None:
+    years = values["years_experience"]
+    if values["level_guess"] is None and years is not None:
+        # Only explicitly stated years imply a level (deterministic, no LLM).
+        values["level_guess"] = "junior" if years < 2 else "mid" if years < 5 else "senior"
+    # The public contract uses zero when no years are stated; do not infer level from it.
+    if years is None:
         values["years_experience"] = 0
     return ResumeProfile(**values, skill_ids=map_skills(extraction.skills, get_taxonomy()))

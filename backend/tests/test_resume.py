@@ -160,5 +160,20 @@ def test_resume_without_stated_years_is_accepted(monkeypatch, fields):
                          files={"file": ("cv.pdf", b"synthetic upload")})
     assert result.status_code == 200
     assert result.json()["years_experience"] == (fields.get("years_experience") or 0)
-    assert result.json()["level_guess"] is None
+    # Level is derived only from explicitly stated years, never from a missing value.
+    assert result.json()["level_guess"] == {0: "junior", 2.5: "mid"}.get(fields.get("years_experience"))
     assert get_session("graduate").resume.years_experience == result.json()["years_experience"]
+
+
+@pytest.mark.parametrize("years,level", [(0, "junior"), (0.7, "junior"), (3, "mid"), (7, "senior"), (None, None)])
+def test_level_guess_from_stated_years(monkeypatch, years, level):
+    # A graduate with 0 stated years must not rank as "unknown level" next to senior postings.
+    monkeypatch.setattr(parser.client, "chat_json", lambda sid, messages, schema, **kw:
+                        LLMResult(True, schema(skills=["React"], years_experience=years)))
+    assert parser.parse_resume("lv", "React developer").level_guess == level
+
+
+def test_stated_level_is_kept(monkeypatch):
+    monkeypatch.setattr(parser.client, "chat_json", lambda sid, messages, schema, **kw:
+                        LLMResult(True, schema(skills=["React"], years_experience=0, level_guess="mid")))
+    assert parser.parse_resume("lv", "React developer").level_guess == "mid"

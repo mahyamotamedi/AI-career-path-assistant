@@ -242,3 +242,46 @@ def test_unknown_correction_is_not_success(p1_boundary, model):
     with pytest.raises(P2Error):
         conv.apply_correction(session, "unsupported")
     assert session.profile.model_dump() == previous
+
+
+def test_quoted_evidence_from_real_model_is_accepted(p1_boundary, model):
+    # Real gateway output wraps quotes in «» and may vary spaces/ZWNJ; the claim is still from this turn.
+    message = "اکسل را عملاً کار کرده‌ام؛ پایتون را فقط شنیده‌ام."
+    model.append(complete(skills=[skill("excel", "known", "«اکسل را عملاً کار کرده‌ام»"),
+                                  skill("python_basics", "heard", '"پایتون را فقط  شنیده ام"')]))
+    reply = conv.handle_message(get_session("q"), message)
+    assert reply.done
+    assert reply.profile.known_concepts == ["excel"] and reply.profile.heard_of_only == ["python_basics"]
+
+
+def test_invented_evidence_is_still_rejected(p1_boundary, model):
+    model.append(complete(skills=[skill("excel", "known", "«اکسل را عملاً کار کرده‌ام»")]))
+    reply = conv.handle_message(get_session("q2"), "مبتدی هستم")
+    assert reply.profile.known_concepts == []
+
+
+def test_skills_answer_to_knowledge_question_completes(p1_boundary, model):
+    # Real gateway sometimes omits knowledge_complete even when the user answered the skills question.
+    session = get_session("k")
+    model.append({"target_role": "recruiter", "target_level": "mid", "current_level": "junior"})
+    first = conv.handle_message(session, "کارشناس جذب جونیور هستم و می‌خوام میانی بشم")
+    assert not first.done and "مهارت" in first.reply
+    model.append({"skills": [skill("excel", "known", "اکسل را عملاً کار کرده‌ام")]})
+    second = conv.handle_message(session, "اکسل را عملاً کار کرده‌ام")
+    assert second.done and second.profile.known_concepts == ["excel"]
+
+
+def test_skills_without_knowledge_question_do_not_complete_early(p1_boundary, model):
+    model.append({"target_role": "recruiter", "target_level": "mid", "current_level": "junior",
+                  "skills": [skill("excel", "known", "اکسل بلدم")]})
+    assert not conv.handle_message(get_session("k2"), "کارشناس جذب جونیور هستم، اکسل بلدم").done
+
+
+@pytest.mark.parametrize("evidence,ok", [
+    ("«پایتون ... را عملاً کار کرده‌ام»", True),   # elided quote, seen on the real gateway
+    ("«پایتون… کار کرده‌ام»", True),
+    ("«کار کرده‌ام ... پایتون»", False),           # pieces out of order
+    ("«پایتون ... جاوا»", False),                  # a piece not in the message
+])
+def test_elided_quotes(evidence, ok):
+    assert conv._quoted(evidence, "پایتون، SQL و گیت را عملاً کار کرده‌ام.") is ok

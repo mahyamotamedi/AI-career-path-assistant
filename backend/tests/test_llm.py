@@ -147,3 +147,25 @@ def test_client_uses_configured_gateway_and_disables_retries(monkeypatch):
 def test_embedding_bad_response(gateway, data):
     gateway[1].append(NS(usage=None, data=data))
     assert not client.embed("s", ["text"]).ok
+
+
+def test_embed_uses_own_timeout(gateway, monkeypatch):
+    # Embedding a batch of postings takes longer than one chat turn; it must not share the chat timeout.
+    monkeypatch.setattr(settings, "llm_timeout_s", 8.0)
+    monkeypatch.setattr(settings, "embed_timeout_s", 45.0)
+    calls, replies = gateway
+    replies.append(NS(usage=NS(prompt_tokens=1), data=[NS(index=0, embedding=[1.0])]))
+    assert client.embed("s", ["data"]).ok
+    assert calls[-1]["timeout"] == 45.0
+
+
+def test_default_json_budget_fits_real_gateway():
+    from app.config import Settings
+    defaults = Settings.model_fields
+    assert defaults["llm_json_budget_s"].default >= 20 and defaults["llm_timeout_s"].default >= 20
+
+
+def test_default_embed_batch_fits_real_gateway():
+    # The metisai gateway drops embedding batches of >=16 postings (connection error after ~55 s); 8 works.
+    from app.config import Settings
+    assert Settings.model_fields["embed_batch_size"].default <= 8

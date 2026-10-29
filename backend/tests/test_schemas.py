@@ -79,3 +79,10 @@ def test_match_without_resume_is_400():
 
 def test_usage_starts_at_zero():
     assert client.get("/api/usage/fresh").json()["calls"] == 0
+
+
+def test_roadmap_unknown_role_is_safe_422():
+    body = {"target_role": "astronaut", "target_level": "junior", "current_level": "junior",
+            "known_concepts": [], "heard_of_only": []}
+    r = TestClient(app, raise_server_exceptions=False).post("/api/roadmap", json=body)
+    assert r.status_code == 422 and "astronaut" not in r.text

@@ -1,1 +1,241 @@
-resume_id,posting_id,relevant
+resume_id,posting_id,relevant,note
+r1_data_analyst_junior,jobinja-turn,0,other role family
+r1_data_analyst_junior,jobinja-tuAE,0,other role family
+r1_data_analyst_junior,jobinja-tuel,0,other role family
+r1_data_analyst_junior,jobinja-tESQ,0,other role family
+r1_data_analyst_junior,jobinja-tMEn,0,other role family
+r1_data_analyst_junior,jobinja-tEk6,0,other role family
+r1_data_analyst_junior,jobinja-tN95,0,other role family
+r1_data_analyst_junior,jobinja-tTYV,0,other role family
+r1_data_analyst_junior,jobinja-tvgA,0,other role family
+r1_data_analyst_junior,jobinja-tMZM,0,other role family
+r1_data_analyst_junior,jobinja-tMNN,0,other role family
+r1_data_analyst_junior,jobinja-tNAk,0,other role family
+r1_data_analyst_junior,jobinja-tugd,1,same family; seniority unknown (allowed)
+r1_data_analyst_junior,jobinja-tM3w,1,same family; seniority unknown (allowed)
+r1_data_analyst_junior,jobinja-tjCw,1,same family; seniority unknown (allowed)
+r1_data_analyst_junior,jobinja-tMBA,0,borderline: same family but seniority two steps away
+r1_data_analyst_junior,jobinja-t7Rf,0,borderline: adjacent role family
+r1_data_analyst_junior,jobinja-tNEn,0,borderline: adjacent role family
+r1_data_analyst_junior,jobinja-tj3D,0,borderline: adjacent role family
+r1_data_analyst_junior,jobinja-tERF,0,borderline: adjacent role family
+r1_data_analyst_junior,jobinja-tETU,0,borderline: adjacent role family
+r1_data_analyst_junior,jobinja-tNxQ,0,borderline: adjacent role family
+r1_data_analyst_junior,jobinja-tNW8,0,borderline: adjacent role family
+r1_data_analyst_junior,jobinja-tu3p,0,borderline: adjacent role family
+r1_data_analyst_junior,jobinja-tEMf,0,other role family
+r1_data_analyst_junior,jobinja-tTtv,0,other role family
+r1_data_analyst_junior,jobinja-tjwC,0,other role family
+r1_data_analyst_junior,jobinja-tTSt,0,other role family
+r1_data_analyst_junior,jobinja-tMF3,0,other role family
+r1_data_analyst_junior,jobinja-tMQ9,0,other role family
+r1_data_analyst_junior,jobinja-tMKd,0,other role family
+r1_data_analyst_junior,jobinja-tOGC,0,other role family
+r1_data_analyst_junior,jobinja-tuUZ,0,other role family
+r1_data_analyst_junior,jobinja-tMhI,0,other role family
+r1_data_analyst_junior,jobinja-tEsz,0,other role family
+r1_data_analyst_junior,jobinja-tMdZ,0,other role family
+r1_data_analyst_junior,jobinja-tEGH,0,other role family
+r1_data_analyst_junior,jobinja-tNLz,0,other role family
+r1_data_analyst_junior,jobinja-tENd,0,other role family
+r1_data_analyst_junior,jobinja-tr5m,0,other role family
+r1_data_analyst_junior,jobvision-1586860,0,other role family
+r1_data_analyst_junior,jobvision-1533757,0,other role family
+r1_data_analyst_junior,jobvision-1576392,0,other role family
+r1_data_analyst_junior,jobvision-1502084,0,other role family
+r1_data_analyst_junior,jobvision-1529282,0,other role family
+r1_data_analyst_junior,jobvision-1562712,0,other role family
+r1_data_analyst_junior,jobvision-1584579,0,other role family
+r1_data_analyst_junior,jobvision-1546394,0,other role family
+r1_data_analyst_junior,jobvision-1564230,0,other role family
+r1_data_analyst_junior,jobvision-1510268,0,other role family
+r1_data_analyst_junior,jobvision-1523449,0,other role family
+r1_data_analyst_junior,jobvision-1448239,0,other role family
+r1_data_analyst_junior,jobvision-1540469,1,same family; seniority one step away
+r1_data_analyst_junior,jobvision-1575793,1,same family; seniority matches
+r1_data_analyst_junior,jobvision-1580855,1,same family; seniority matches
+r1_data_analyst_junior,jobvision-1575785,1,same family; seniority one step away
+r1_data_analyst_junior,jobvision-1555616,0,borderline: adjacent role family
+r1_data_analyst_junior,jobvision-1534233,0,borderline: adjacent role family
+r1_data_analyst_junior,jobvision-1582974,1,same family; seniority matches
+r1_data_analyst_junior,jobvision-1576932,0,borderline: adjacent role family
+r1_data_analyst_junior,jobvision-1572045,0,borderline: adjacent role family
+r1_data_analyst_junior,jobvision-1566821,0,borderline: adjacent role family
+r1_data_analyst_junior,jobvision-1538074,0,borderline: adjacent role family
+r1_data_analyst_junior,jobvision-1521747,0,other role family
+r1_data_analyst_junior,jobvision-1576864,0,other role family
+r1_data_analyst_junior,jobvision-1550436,0,other role family
+r1_data_analyst_junior,jobvision-1543182,0,other role family
+r1_data_analyst_junior,jobvision-1555664,0,other role family
+r1_data_analyst_junior,jobvision-1587977,0,borderline: adjacent role family
+r1_data_analyst_junior,jobvision-1556274,0,borderline: adjacent role family
+r1_data_analyst_junior,jobvision-1537329,0,borderline: adjacent role family
+r1_data_analyst_junior,jobvision-1539526,0,borderline: adjacent role family
+r1_data_analyst_junior,jobvision-1531541,0,other role family
+r1_data_analyst_junior,jobvision-1545900,0,other role family
+r1_data_analyst_junior,jobvision-1471229,0,other role family
+r1_data_analyst_junior,jobvision-1555565,0,other role family
+r1_data_analyst_junior,jobvision-1516726,0,other role family
+r1_data_analyst_junior,jobvision-1536336,0,other role family
+r1_data_analyst_junior,jobvision-1443237,0,other role family
+r1_data_analyst_junior,jobvision-1523414,0,other role family
+r2_backend_python_mid,jobinja-turn,1,same family; seniority matches
+r2_backend_python_mid,jobinja-tuAE,1,same family; seniority one step away
+r2_backend_python_mid,jobinja-tuel,1,same family; seniority unknown (allowed)
+r2_backend_python_mid,jobinja-tESQ,1,same family; seniority matches
+r2_backend_python_mid,jobinja-tMEn,0,other role family
+r2_backend_python_mid,jobinja-tEk6,0,other role family
+r2_backend_python_mid,jobinja-tN95,0,other role family
+r2_backend_python_mid,jobinja-tTYV,0,other role family
+r2_backend_python_mid,jobinja-tvgA,0,borderline: adjacent role family
+r2_backend_python_mid,jobinja-tMZM,0,borderline: adjacent role family
+r2_backend_python_mid,jobinja-tMNN,0,borderline: adjacent role family
+r2_backend_python_mid,jobinja-tNAk,0,borderline: adjacent role family
+r2_backend_python_mid,jobinja-tugd,0,other role family
+r2_backend_python_mid,jobinja-tM3w,0,other role family
+r2_backend_python_mid,jobinja-tjCw,0,other role family
+r2_backend_python_mid,jobinja-tMBA,0,other role family
+r2_backend_python_mid,jobinja-t7Rf,0,borderline: adjacent role family
+r2_backend_python_mid,jobinja-tNEn,0,borderline: adjacent role family
+r2_backend_python_mid,jobinja-tj3D,0,borderline: adjacent role family
+r2_backend_python_mid,jobinja-tERF,0,borderline: adjacent role family
+r2_backend_python_mid,jobinja-tETU,0,borderline: adjacent role family
+r2_backend_python_mid,jobinja-tNxQ,0,borderline: adjacent role family
+r2_backend_python_mid,jobinja-tNW8,0,borderline: adjacent role family
+r2_backend_python_mid,jobinja-tu3p,1,same family; seniority one step away
+r2_backend_python_mid,jobinja-tEMf,0,other role family
+r2_backend_python_mid,jobinja-tTtv,0,other role family
+r2_backend_python_mid,jobinja-tjwC,0,other role family
+r2_backend_python_mid,jobinja-tTSt,0,other role family
+r2_backend_python_mid,jobinja-tMF3,0,other role family
+r2_backend_python_mid,jobinja-tMQ9,0,other role family
+r2_backend_python_mid,jobinja-tMKd,0,other role family
+r2_backend_python_mid,jobinja-tOGC,0,other role family
+r2_backend_python_mid,jobinja-tuUZ,0,other role family
+r2_backend_python_mid,jobinja-tMhI,0,other role family
+r2_backend_python_mid,jobinja-tEsz,0,other role family
+r2_backend_python_mid,jobinja-tMdZ,0,other role family
+r2_backend_python_mid,jobinja-tEGH,0,other role family
+r2_backend_python_mid,jobinja-tNLz,0,other role family
+r2_backend_python_mid,jobinja-tENd,0,other role family
+r2_backend_python_mid,jobinja-tr5m,0,other role family
+r2_backend_python_mid,jobvision-1586860,1,same family; seniority matches
+r2_backend_python_mid,jobvision-1533757,1,same family; seniority matches
+r2_backend_python_mid,jobvision-1576392,1,same family; seniority one step away
+r2_backend_python_mid,jobvision-1502084,1,same family; seniority matches
+r2_backend_python_mid,jobvision-1529282,0,other role family
+r2_backend_python_mid,jobvision-1562712,0,other role family
+r2_backend_python_mid,jobvision-1584579,0,other role family
+r2_backend_python_mid,jobvision-1546394,0,other role family
+r2_backend_python_mid,jobvision-1564230,0,borderline: adjacent role family
+r2_backend_python_mid,jobvision-1510268,0,borderline: adjacent role family
+r2_backend_python_mid,jobvision-1523449,0,borderline: adjacent role family
+r2_backend_python_mid,jobvision-1448239,0,borderline: adjacent role family
+r2_backend_python_mid,jobvision-1540469,0,other role family
+r2_backend_python_mid,jobvision-1575793,0,other role family
+r2_backend_python_mid,jobvision-1580855,0,other role family
+r2_backend_python_mid,jobvision-1575785,0,other role family
+r2_backend_python_mid,jobvision-1555616,0,borderline: adjacent role family
+r2_backend_python_mid,jobvision-1534233,0,borderline: adjacent role family
+r2_backend_python_mid,jobvision-1582974,0,other role family
+r2_backend_python_mid,jobvision-1576932,0,borderline: adjacent role family
+r2_backend_python_mid,jobvision-1572045,0,other role family
+r2_backend_python_mid,jobvision-1566821,0,other role family
+r2_backend_python_mid,jobvision-1538074,0,other role family
+r2_backend_python_mid,jobvision-1521747,0,other role family
+r2_backend_python_mid,jobvision-1576864,0,other role family
+r2_backend_python_mid,jobvision-1550436,0,other role family
+r2_backend_python_mid,jobvision-1543182,0,other role family
+r2_backend_python_mid,jobvision-1555664,0,other role family
+r2_backend_python_mid,jobvision-1587977,0,other role family
+r2_backend_python_mid,jobvision-1556274,0,other role family
+r2_backend_python_mid,jobvision-1537329,0,other role family
+r2_backend_python_mid,jobvision-1539526,0,other role family
+r2_backend_python_mid,jobvision-1531541,0,other role family
+r2_backend_python_mid,jobvision-1545900,0,other role family
+r2_backend_python_mid,jobvision-1471229,0,other role family
+r2_backend_python_mid,jobvision-1555565,0,other role family
+r2_backend_python_mid,jobvision-1516726,0,other role family
+r2_backend_python_mid,jobvision-1536336,0,other role family
+r2_backend_python_mid,jobvision-1443237,0,other role family
+r2_backend_python_mid,jobvision-1523414,0,other role family
+r3_digital_marketing_junior,jobinja-turn,0,other role family
+r3_digital_marketing_junior,jobinja-tuAE,0,other role family
+r3_digital_marketing_junior,jobinja-tuel,0,other role family
+r3_digital_marketing_junior,jobinja-tESQ,0,other role family
+r3_digital_marketing_junior,jobinja-tMEn,0,other role family
+r3_digital_marketing_junior,jobinja-tEk6,0,other role family
+r3_digital_marketing_junior,jobinja-tN95,0,other role family
+r3_digital_marketing_junior,jobinja-tTYV,0,other role family
+r3_digital_marketing_junior,jobinja-tvgA,0,other role family
+r3_digital_marketing_junior,jobinja-tMZM,0,other role family
+r3_digital_marketing_junior,jobinja-tMNN,0,other role family
+r3_digital_marketing_junior,jobinja-tNAk,0,other role family
+r3_digital_marketing_junior,jobinja-tugd,0,other role family
+r3_digital_marketing_junior,jobinja-tM3w,0,other role family
+r3_digital_marketing_junior,jobinja-tjCw,0,other role family
+r3_digital_marketing_junior,jobinja-tMBA,0,other role family
+r3_digital_marketing_junior,jobinja-t7Rf,0,other role family
+r3_digital_marketing_junior,jobinja-tNEn,0,other role family
+r3_digital_marketing_junior,jobinja-tj3D,0,other role family
+r3_digital_marketing_junior,jobinja-tERF,0,other role family
+r3_digital_marketing_junior,jobinja-tETU,0,other role family
+r3_digital_marketing_junior,jobinja-tNxQ,0,other role family
+r3_digital_marketing_junior,jobinja-tNW8,0,other role family
+r3_digital_marketing_junior,jobinja-tu3p,0,other role family
+r3_digital_marketing_junior,jobinja-tEMf,0,borderline: adjacent role family
+r3_digital_marketing_junior,jobinja-tTtv,0,borderline: adjacent role family
+r3_digital_marketing_junior,jobinja-tjwC,0,borderline: adjacent role family
+r3_digital_marketing_junior,jobinja-tTSt,0,borderline: adjacent role family
+r3_digital_marketing_junior,jobinja-tMF3,0,other role family
+r3_digital_marketing_junior,jobinja-tMQ9,0,other role family
+r3_digital_marketing_junior,jobinja-tMKd,0,other role family
+r3_digital_marketing_junior,jobinja-tOGC,0,other role family
+r3_digital_marketing_junior,jobinja-tuUZ,1,same family; seniority matches
+r3_digital_marketing_junior,jobinja-tMhI,1,same family; seniority unknown (allowed)
+r3_digital_marketing_junior,jobinja-tEsz,1,same family; seniority one step away
+r3_digital_marketing_junior,jobinja-tMdZ,1,same family; seniority one step away
+r3_digital_marketing_junior,jobinja-tEGH,1,same family; seniority one step away
+r3_digital_marketing_junior,jobinja-tNLz,1,same family; seniority unknown (allowed)
+r3_digital_marketing_junior,jobinja-tENd,1,same family; seniority one step away
+r3_digital_marketing_junior,jobinja-tr5m,1,same family; seniority unknown (allowed)
+r3_digital_marketing_junior,jobvision-1586860,0,other role family
+r3_digital_marketing_junior,jobvision-1533757,0,other role family
+r3_digital_marketing_junior,jobvision-1576392,0,other role family
+r3_digital_marketing_junior,jobvision-1502084,0,other role family
+r3_digital_marketing_junior,jobvision-1529282,0,other role family
+r3_digital_marketing_junior,jobvision-1562712,0,other role family
+r3_digital_marketing_junior,jobvision-1584579,0,other role family
+r3_digital_marketing_junior,jobvision-1546394,0,other role family
+r3_digital_marketing_junior,jobvision-1564230,0,other role family
+r3_digital_marketing_junior,jobvision-1510268,0,other role family
+r3_digital_marketing_junior,jobvision-1523449,0,other role family
+r3_digital_marketing_junior,jobvision-1448239,0,other role family
+r3_digital_marketing_junior,jobvision-1540469,0,other role family
+r3_digital_marketing_junior,jobvision-1575793,0,other role family
+r3_digital_marketing_junior,jobvision-1580855,0,other role family
+r3_digital_marketing_junior,jobvision-1575785,0,other role family
+r3_digital_marketing_junior,jobvision-1555616,0,other role family
+r3_digital_marketing_junior,jobvision-1534233,0,other role family
+r3_digital_marketing_junior,jobvision-1582974,0,other role family
+r3_digital_marketing_junior,jobvision-1576932,0,other role family
+r3_digital_marketing_junior,jobvision-1572045,0,other role family
+r3_digital_marketing_junior,jobvision-1566821,0,other role family
+r3_digital_marketing_junior,jobvision-1538074,0,other role family
+r3_digital_marketing_junior,jobvision-1521747,0,other role family
+r3_digital_marketing_junior,jobvision-1576864,0,borderline: adjacent role family
+r3_digital_marketing_junior,jobvision-1550436,0,borderline: adjacent role family
+r3_digital_marketing_junior,jobvision-1543182,0,borderline: adjacent role family
+r3_digital_marketing_junior,jobvision-1555664,0,borderline: adjacent role family
+r3_digital_marketing_junior,jobvision-1587977,0,other role family
+r3_digital_marketing_junior,jobvision-1556274,0,other role family
+r3_digital_marketing_junior,jobvision-1537329,0,other role family
+r3_digital_marketing_junior,jobvision-1539526,0,other role family
+r3_digital_marketing_junior,jobvision-1531541,1,same family; seniority matches
+r3_digital_marketing_junior,jobvision-1545900,1,same family; seniority one step away
+r3_digital_marketing_junior,jobvision-1471229,1,same family; seniority one step away
+r3_digital_marketing_junior,jobvision-1555565,1,same family; seniority matches
+r3_digital_marketing_junior,jobvision-1516726,1,same family; seniority one step away
+r3_digital_marketing_junior,jobvision-1536336,1,same family; seniority one step away
+r3_digital_marketing_junior,jobvision-1443237,1,same family; seniority one step away
+r3_digital_marketing_junior,jobvision-1523414,1,same family; seniority matches

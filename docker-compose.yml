@@ -6,6 +6,16 @@ services:
     environment:
       CORS_ORIGINS: '["http://localhost:5173"]'
     volumes: ["./backend:/app"]
+  collector:  # B-11: incremental job refresh every REFRESH_INTERVAL_H hours (default 5)
+    build: ./backend
+    env_file: .env
+    environment:
+      REFRESH_INTERVAL_H: ${REFRESH_INTERVAL_H:-5}
+    volumes: ["./backend:/app"]
+    command: >
+      sh -c "while true; do python -m scripts.collect_jobs --incremental;
+      sleep $$((REFRESH_INTERVAL_H * 3600)); done"
+    restart: unless-stopped
   frontend:
     build: ./frontend
     ports: ["5173:5173"]

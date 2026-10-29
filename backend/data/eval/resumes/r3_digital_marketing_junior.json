@@ -1,0 +1,29 @@
+{
+  "skills": [
+    "SEO",
+    "سئو",
+    "Google Analytics",
+    "Google Ads",
+    "تولید محتوا",
+    "شبکه‌های اجتماعی",
+    "بازاریابی دیجیتال",
+    "Excel"
+  ],
+  "skill_ids": [
+    "seo",
+    "web_analytics",
+    "paid_advertising",
+    "content_marketing",
+    "excel"
+  ],
+  "years_experience": 1.5,
+  "education": [
+    "کارشناسی مدیریت بازرگانی - دانشگاه شیراز"
+  ],
+  "previous_roles": [
+    "کارشناس محتوا",
+    "کارآموز دیجیتال مارکتینگ"
+  ],
+  "location": "تهران",
+  "level_guess": "junior"
+}

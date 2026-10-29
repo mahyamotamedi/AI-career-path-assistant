@@ -1,0 +1,6 @@
+Reza Sample (fictional resume)
+Tehran
+Objective: Backend Developer (Python / Django)
+Education: BSc Computer Engineering, Isfahan University of Technology
+Experience: Backend Developer, 3.5 years — REST APIs with Django REST Framework, PostgreSQL, Redis, Docker, unit testing with pytest, CI with GitLab.
+مهارت‌ها: Python، Django، REST API، PostgreSQL، Docker، Git، Redis، تست نرم‌افزار

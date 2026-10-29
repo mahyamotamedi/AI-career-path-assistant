@@ -17,6 +17,7 @@ log = logging.getLogger(__name__)
 SOURCE = "jobinja"
 BASE = "https://jobinja.ir"
 CAP = 40
+LISTING_TTL_S = 3600  # listings go stale after 1 h (incremental refresh); detail pages stay cached
 # one keyword per taxonomy area so the sample spans software, data, business and marketing
 KEYWORDS = [
     "python", "react", "devops", "تحلیلگر داده", "data engineer", "یادگیری ماشین",
@@ -123,7 +124,7 @@ def fetch(fetcher: PoliteFetcher, cap: int = CAP) -> list[JobPosting]:
     out: list[JobPosting] = []
     seen: set[str] = set()
     for kw in KEYWORDS:
-        html = fetcher.get(list_url(kw))
+        html = fetcher.get(list_url(kw), max_age_s=LISTING_TTL_S)
         if html is None:
             log.warning("jobinja: listing %r unavailable", kw)
             continue

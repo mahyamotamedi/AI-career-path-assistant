@@ -25,6 +25,7 @@ SOURCE = "jobvision"
 LIST_URL = "https://candidateapi.jobvision.ir/api/v1/JobPost/List"
 PAGE_URL = "https://jobvision.ir/jobs/{id}"
 CAP = 40
+LISTING_TTL_S = 3600  # list responses go stale after 1 h (incremental refresh); detail pages stay cached
 KEYWORDS = [
     "python", "react", "devops", "تحلیلگر داده", "مهندس داده", "یادگیری ماشین",
     "مدیر محصول", "تحلیلگر مالی", "سئو", "بازاریابی دیجیتال", "کارشناس جذب",
@@ -116,7 +117,8 @@ def fetch(fetcher: PoliteFetcher, cap: int = CAP) -> list[JobPosting]:
     out: list[JobPosting] = []
     seen: set[int] = set()
     for kw in KEYWORDS:
-        raw = fetcher.post_json(LIST_URL, {"pageSize": per_kw + 4, "requestedPage": 1, "keyword": kw, "sortBy": 1})
+        raw = fetcher.post_json(LIST_URL, {"pageSize": per_kw + 4, "requestedPage": 1, "keyword": kw, "sortBy": 1},
+                                max_age_s=LISTING_TTL_S)
         if raw is None:
             log.warning("jobvision: list %r unavailable (blocked or failed)", kw)
             continue

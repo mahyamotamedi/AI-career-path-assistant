@@ -1,0 +1,34 @@
+{
+  "skills": [
+    "Python",
+    "Django",
+    "REST API",
+    "PostgreSQL",
+    "Docker",
+    "Git",
+    "Redis",
+    "پایگاه داده رابطه‌ای",
+    "تست نرم‌افزار"
+  ],
+  "skill_ids": [
+    "python_basics",
+    "backend_framework",
+    "rest_api",
+    "sql_basics",
+    "docker_basics",
+    "git_basics",
+    "nosql_databases",
+    "relational_db",
+    "testing_basics"
+  ],
+  "years_experience": 3.5,
+  "education": [
+    "Bachelor of Computer Engineering - Isfahan University of Technology"
+  ],
+  "previous_roles": [
+    "برنامه‌نویس پایتون",
+    "Backend Developer"
+  ],
+  "location": "تهران",
+  "level_guess": "mid"
+}

@@ -97,10 +97,14 @@ class PoliteFetcher:
     def _cache_path(self, url: str) -> Path:
         return self.cache_dir / (hashlib.sha1(url.encode()).hexdigest() + ".txt")
 
-    def get(self, url: str, use_cache: bool = True) -> str | None:
+    @staticmethod
+    def _fresh(cache: Path, max_age_s: float | None) -> bool:
+        return cache.exists() and (max_age_s is None or time.time() - cache.stat().st_mtime <= max_age_s)
+
+    def get(self, url: str, use_cache: bool = True, max_age_s: float | None = None) -> str | None:
         """Return response text, or None if disallowed by robots.txt / request failed."""
         cache = self._cache_path(url)
-        if use_cache and cache.exists():
+        if use_cache and self._fresh(cache, max_age_s):
             return cache.read_text(encoding="utf-8")
         if not self._allowed(url):
             return None
@@ -113,11 +117,11 @@ class PoliteFetcher:
         cache.write_text(resp.text, encoding="utf-8")
         return resp.text
 
-    def post_json(self, url: str, payload: dict, use_cache: bool = True) -> str | None:
+    def post_json(self, url: str, payload: dict, use_cache: bool = True, max_age_s: float | None = None) -> str | None:
         """POST a JSON body (no query string needed). Same robots/delay/cache path as `get`."""
         key = url + json.dumps(payload, sort_keys=True)
         cache = self._cache_path(key)
-        if use_cache and cache.exists():
+        if use_cache and self._fresh(cache, max_age_s):
             return cache.read_text(encoding="utf-8")
         if not self._allowed(url):
             return None

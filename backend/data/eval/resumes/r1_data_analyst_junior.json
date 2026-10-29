@@ -1,0 +1,29 @@
+{
+  "skills": [
+    "Excel",
+    "اکسل پیشرفته",
+    "SQL",
+    "Python",
+    "Pandas",
+    "Power BI",
+    "آمار توصیفی",
+    "داشبورد مدیریتی",
+    "تحلیل داده"
+  ],
+  "skill_ids": [
+    "excel",
+    "sql_basics",
+    "python_basics",
+    "pandas"
+  ],
+  "years_experience": 1.0,
+  "education": [
+    "کارشناسی آمار - دانشگاه تهران"
+  ],
+  "previous_roles": [
+    "کارآموز تحلیل داده",
+    "کارشناس گزارش‌گیری"
+  ],
+  "location": "تهران",
+  "level_guess": "junior"
+}

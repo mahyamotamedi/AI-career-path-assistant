@@ -49,7 +49,7 @@ _Average tokens and estimated USD for a typical session of each module._
 _Which AI coding assistants were used and for what._
 
 ## Limitations
-_Small taxonomy, LLM errors, language coverage, etc._ **P3 (jobs & ranking):** the 80 postings are Tehran-heavy with only 5 remote jobs and come from two sites; skill coverage depends on taxonomy aliases (generic or unlisted skills such as Google Search Console are not mapped, and a posting with few mapped skills can outrank richer ones); the evaluation set is small (3 resumes) with rule-based labels that were only spot-checked; hybrid numbers need an embeddings run; postings are a snapshot from 29 October 2026 (incremental refresh every 5 h is designed — TTL listing cache, upsert, expiry — but not deployed).
+_Small taxonomy, LLM errors, language coverage, etc._ **P3 (jobs & ranking):** the 80 postings are Tehran-heavy with only 5 remote jobs and come from two sites; skill coverage depends on taxonomy aliases (generic or unlisted skills such as Google Search Console are not mapped, and a posting with few mapped skills can outrank richer ones); the evaluation set is small (3 resumes) with rule-based labels that were only spot-checked; hybrid numbers need an embeddings run; postings are a snapshot from 29 October 2026; incremental refresh (B-11: `make refresh`, a compose `collector` service every 5 h, 1 h listing cache, upsert by id, 60-day expiry, failed sources keep their old postings, lock file, atomic write) is implemented and unit-tested but has not yet been run against the live sites.
 
 ## P2 implementation status (29 October 2026)
 

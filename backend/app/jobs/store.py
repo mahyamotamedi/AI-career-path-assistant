@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 
 from app.config import settings
@@ -18,6 +19,10 @@ def load_postings() -> list[JobPosting]:
 
 
 def save_postings(postings: list[JobPosting]) -> None:
-    with postings_path().open("w", encoding="utf-8") as f:
+    """Atomic write: a crash mid-write leaves the previous postings.jsonl intact."""
+    path = postings_path()
+    tmp = path.with_suffix(".jsonl.tmp")
+    with tmp.open("w", encoding="utf-8") as f:
         for p in postings:
             f.write(p.model_dump_json() + "\n")
+    os.replace(tmp, path)

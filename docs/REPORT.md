@@ -43,6 +43,8 @@ Per resume (P@5 / nDCG@10):
 ## Cost per session
 _Average tokens and estimated USD for a typical session of each module._
 
+**Module B latency (P3):** ranking all 80 postings takes ~10 ms for BM25 and, with embeddings, ~10 ms of local compute plus gateway calls: one-time embedding of the 80 posting texts (2 batched calls, then cached on disk) and one call for the resume per request. Measured here with a fake gateway only (cold 0.008 s, warm 0.007 s); real gateway latency was not measured because no key was available — expected well under the 60 s limit (NF-02). A hidden-resume check (junior React developer, not an eval role; DOCX through `/api/resume` with the LLM answer stubbed) returned React/front-end postings first for both methods.
+
 ## AI-assistant disclosure
 _Which AI coding assistants were used and for what._
 

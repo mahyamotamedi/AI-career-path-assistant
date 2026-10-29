@@ -31,10 +31,12 @@ Interactive docs: http://localhost:8000/docs
 
 ## Data sources
 
-| Source | Type | Postings | Notes |
-|---|---|---|---|
-| _TBD_ | public API | | |
-| _TBD_ | | | |
+| Source | Method | robots.txt | Postings | Collected |
+|---|---|---|---|---|
+| jobinja.ir | Server-rendered HTML (keyword listings + detail pages, JSON-LD) | Allows everything except `/style_guide/` | 40 | 2026-10-29 |
+| jobvision.ir | `POST candidateapi.jobvision.ir/api/v1/JobPost/List` (JSON body, no query string) + server-rendered `jobvision.ir/jobs/<id>` pages | API host allows only `/api/v1/JobPost/List`; main site blocks URLs with `?` (we use none) | 40 | 2026-10-29 |
+
+Total after dedup: 80 (`backend/data/jobs/postings.jsonl`). Requests use the `RahnamaHackathonBot` User-Agent, ≥3 s per host, robots.txt checked before every request (Google-style wildcard matching in `collector/base.py`). No logins or cookies.
 
 ## Acknowledgements
 

@@ -1,6 +1,6 @@
 """In-memory per-session store. No persistence. NEVER log session contents."""
 from dataclasses import dataclass, field
-from threading import Lock
+from threading import Lock, RLock
 
 from app.schemas import CareerProfile, ResumeProfile, UsageReport
 
@@ -13,6 +13,12 @@ class SessionState:
     profile: CareerProfile | None = None
     resume: ResumeProfile | None = None
     usage: UsageReport = field(default=None)  # type: ignore[assignment]
+
+    lock: object = field(default_factory=RLock, repr=False)
+    usage_lock: object = field(default_factory=Lock, repr=False)
+    draft: dict = field(default_factory=dict, repr=False)
+    usage_complete: bool = True
+    cost_complete: bool = True
 
     def __post_init__(self) -> None:
         if self.usage is None:

@@ -2,6 +2,17 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+**P2 reconciliation (29 October 2026):** This plan predates the merged P1 interfaces.
+The current P2 branch contains `fc59118`, including P1 `28ddedf` through merge `9aa3b8d`.
+Use the concrete interfaces below; do not create replacement stores, graphs, summaries,
+or public contracts to match earlier illustrative signatures. This review is limited to
+P2 and supporting integration/documentation; P3/P4 and optional voice/OCR/export remain
+separate workstreams. The user's no-commit/no-push instruction overrides commit steps
+for this work session. P2 code and tests exist, but runtime checkboxes remain unchecked
+until the required dependencies are installed and tests actually run. The referenced
+superpowers execution skills are not installed in this session; this is a direct P2
+compatibility review, not execution of the full multi-workstream plan.
+
 **Goal:** Turn the existing skeleton into a working Persian-first app: Module A (chat → deterministic roadmap graph) and Module B (resume → top-10 ranked real job postings), with eval numbers, report and demo.
 
 **Architecture:** FastAPI backend with deterministic taxonomy/graph/ranking code and an LLM used only for conversation and extraction (via `llm.client.chat_json` + Pydantic). React/Vite RTL frontend renders the roadmap with React Flow. Every endpoint already falls back to fixtures (`STUB` log) until its real component lands; each phase removes stubs.
@@ -18,8 +29,8 @@
 - Never log or persist resume text, profiles or chat content; sessions are in-memory only.
 - Keys only from `.env` via `config.py`; `.env` never committed.
 - Unknown roles/concepts from the LLM are discarded, never shown.
-- Persian text uses `ی`/`ک` (not `ي`/`ك`) and ZWNJ; normalise with hazm. UI is `dir="rtl"`, `lang="fa"`, Vazirmatn font.
-- Chat asks at most 6 questions. Roadmap = targets + transitive prerequisites − known, topologically ordered; `heard_of_only` is NOT known.
+- Persian text uses `ی`/`ک` (not `ي`/`ك`) and ZWNJ; use Hazm-compatible character/spacing normalization while preserving technical tokens. UI is `dir="rtl"`, `lang="fa"`, Vazirmatn font.
+- Chat asks at most 6 questions. Roadmap = cumulative targets and required prerequisites, topologically ordered with known/todo statuses. P1 infers known prerequisite closure; P2 must resolve contradictions with explicit unknown/heard-only evidence before publication.
 - Postings: ≥50 from ≥2 public sources, normalised schema, cached by 11:00. Scraper: obey robots.txt, ≥2 s between requests per host, identifying User-Agent.
 - Top 10 results with score, matched/missing skills, link to original posting. Filters: location, seniority, remote.
 - Eval: 3 synthetic resumes × ≥20 labelled postings; Precision@5 and nDCG@10 vs BM25.
@@ -34,7 +45,7 @@
 
 - Empty/garbled/scanned (image-only) PDF or a password-protected/oversized file upload → friendly Persian error, no 500.
 - User types English, mixed Persian/English or Arabic-letter (`ي`/`ك`) text in chat or resume → still maps to taxonomy concepts.
-- LLM returns role/concept ids not in the taxonomy, or a valid role with an empty/odd level → dropped silently, roadmap still renders.
+- LLM returns role/concept ids not in the taxonomy, or a valid role with an empty/odd level → do not invent a level or substitute a role. Preserve valid state and clarify within budget; otherwise return a safe incomplete outcome. Publish a roadmap only after a complete validated profile.
 - Filters that match zero postings, or a resume with zero matched skills → empty state with message, not an empty crash.
 - User says "I don't know X" for a concept that is a prerequisite of known ones, or corrects the same concept twice → roadmap stays consistent (idempotent).
 - Same posting from two sources with slightly different titles/companies → deduped to one.
@@ -85,7 +96,7 @@ Scoring weights: Module A 25, Module B 25, AI/ML quality 20, engineering 10, UX/
 | LLM access | `openai` SDK → OpenAI-compatible gateway (`LLM_BASE_URL`, `LLM_API_KEY`, `CHAT_MODEL`, `EXTRACT_MODEL`, `EMBED_MODEL`) | model names still TBD in README; pick one cheap fast chat model, one JSON-capable extraction model, one multilingual embedding model |
 | Graph | networkx (DAG, ancestors, topological sort) | roadmap |
 | Taxonomy data | PyYAML in skeleton; existing sibling `taxonomy/` package uses JSON (154 concepts, 12 roles, 4 domains, 303 verified links) | Phase 1 decides one format — see Task 1.1 |
-| Persian NLP | hazm | normalisation, tokenisation |
+| Persian NLP | hazm-compatible normalization in P2 | character/spacing cleanup preserves `C++`, `C#`, `.NET`, and IDs; Hazm remains a declared dependency |
 | Resume parsing | PyMuPDF (PDF), python-docx (DOCX) | OCR (pytesseract) optional only |
 | Scraping | httpx, `urllib.robotparser`, JSON APIs first (HTML + selectolax/BeautifulSoup only if needed) | polite fetcher in `collector/base.py` |
 | Ranking | rank_bm25 (baseline), numpy + scikit-learn (cosine, metrics), LLM embeddings | hybrid = skill overlap + embedding cosine |
@@ -116,7 +127,7 @@ Goal: everyone runs the skeleton and agrees on contracts.
 
 **Files:** Modify `.env.example`, `README.md` (model table), `Makefile`; verify `backend/tests/test_schemas.py`.
 
-- [ ] **Step 1:** Run `make install && make test`; fix Makefile for Windows users (use `python -m venv` + `Scripts/` path or document WSL/Docker as the supported path). Expected: `test_schemas.py` passes; `test_graph.py` xfails only.
+- [ ] **Step 1:** Run `make install && make test`; fix Makefile for Windows users (use `python -m venv` + `Scripts/` path or document WSL/Docker as the supported path). Expected on current merged P1: schema and graph tests pass with no P1 xfails; P2 tests use mocked model calls and require no keys. The earlier skeleton-only xfail baseline is obsolete.
 - [ ] **Step 2:** Run `docker compose up`; open `:5173` and click through both pages on fixtures. Expected: no console errors.
 - [ ] **Step 3:** Choose gateway models; fill README "Models used" and local `.env`. Verify with one `chat_json` smoke call. Expected: `LLMResult.ok == True` and `/api/usage/{sid}` non-zero.
 - [ ] **Step 3b:** Rewrite requirement IDs in `docs/TASKS.md` to the RFP numbering (reconciliation table above) and mark Must/Should/Could on each item.
@@ -132,7 +143,7 @@ Goal: everyone runs the skeleton and agrees on contracts.
 
 **Files:** Modify `backend/app/careers/taxonomy.py`, `backend/data/taxonomy/{roles,concepts,resources}.yaml`; Create `backend/scripts/validate_taxonomy.py` (exists as stub), Test `backend/tests/test_graph.py`.
 
-**Interfaces:** Produces `Taxonomy` (with `.concepts`, `.roles`), `get_taxonomy() -> Taxonomy`, `ancestors(taxonomy, concept_id) -> set[str]`, `check_acyclic(taxonomy) -> None` (raises `ValueError` naming the cycle).
+**Interfaces (merged P1):** `Taxonomy` (with `.concepts`, `.roles`), `get_taxonomy() -> Taxonomy`, `ancestors(concepts: dict[str, Concept], ids) -> set[str]` (includes input IDs), `check_acyclic(concepts: dict[str, Concept]) -> None` (raises `TaxonomyError`, a `ValueError`), `find_role(text, taxonomy) -> str | None`, and `normalize_text(text) -> str`. P1 is already implemented; do not recreate it.
 
 - [ ] **Step 1:** Write failing test `test_cycle_rejected` (A→B→A raises `ValueError`) and `test_taxonomy_has_min_coverage` (≥10 roles, domains ⊇ {software, data, business}, every role has junior/mid/senior).
 - [ ] **Step 2:** Run `cd backend && python -m pytest tests/test_graph.py -k "cycle or coverage" -v`; expect FAIL.
@@ -146,19 +157,19 @@ Goal: everyone runs the skeleton and agrees on contracts.
 
 **Files:** Modify `backend/app/careers/graph.py`, Test `backend/tests/test_graph.py`.
 
-**Interfaces:** Consumes `get_taxonomy`, `pick_resources`. Produces `compute_roadmap(profile: CareerProfile, taxonomy: Taxonomy | None = None) -> Roadmap` and `sanitize_profile(profile, taxonomy) -> tuple[CareerProfile, list[str]]` (second item = dropped ids).
+**Interfaces (merged P1):** Consumes `get_taxonomy`, `pick_resources`. Produces `compute_roadmap(profile: CareerProfile, taxonomy: Taxonomy | None = None) -> Roadmap`. There is no existing `sanitize_profile` callable: P2 validates observations against the complete taxonomy before publication. Keep P1's `_summary_fa` unchanged.
 
 - [ ] **Step 1:** Write tests: `test_prerequisites_before_dependents` (order index of prereq < dependent), `test_known_concepts_excluded_as_todo` (status `known` for known, and their own prerequisites not required), `test_heard_of_only_not_known`, `test_senior_includes_junior_and_mid`, `test_unknown_ids_dropped`, `test_unknown_role_raises_valueerror`.
 - [ ] **Step 2:** Run `python -m pytest tests/test_graph.py -v`; expect FAIL (NotImplementedError).
 - [ ] **Step 3:** Implement per the docstring in `graph.py` (cumulative levels, `networkx.ancestors`, layer = longest path from root, topological `order`). Generate the Persian `summary_fa` from the same `nodes`/`order` so it cannot disagree with the graph (A-09); add `test_summary_mentions_only_graph_nodes`.
-- [ ] **Step 4:** Run tests; PASS, no xfail left. Remove the fixture fallback for `/roadmap` in `api/roadmap.py`.
+- [ ] **Step 4:** Run tests; PASS, no P1 xfail left. `/roadmap` must use the real P1 engine; assert no `STUB` success in integration tests. The existing NotImplementedError-only fallback remains solely for older development checkouts, per the P2 repository prompt; never broaden it to hide runtime/model errors.
 - [ ] **Step 5:** Commit `feat: deterministic roadmap`.
 
 ### Task 1.3: Resources with verified links (Mandatory — A-07)
 
 **Files:** Modify `backend/app/careers/resources.py`, `backend/scripts/verify_resources.py`.
 
-**Interfaces:** Produces `pick_resources(concept_id: str, limit: int = 3) -> list[Resource]` (verified first, Persian before English when both exist).
+**Interfaces (merged P1):** `pick_resources(concept_id: str, taxonomy: Taxonomy, limit: int = 2) -> list[Resource]` (verified only, Persian first, deterministic ordering).
 
 - [ ] **Step 1:** Test `test_every_concept_has_verified_resource` and `test_pick_resources_prefers_verified`.
 - [ ] **Step 2:** Run; expect FAIL.
@@ -179,11 +190,11 @@ Goal: everyone runs the skeleton and agrees on contracts.
 
 # Phase 2 — LLM Layer + Job Data (parallel, target: 11:00 postings cached, 13:00 end-to-end)
 
-### Task 2.1: Resilient LLM client (Mandatory — NF-05, NF-06)
+### Task 2.1: Resilient LLM client (Mandatory — NF-06; Should — NF-05)
 
-**Files:** Modify `backend/app/llm/client.py`, `backend/app/llm/prompts.py`, `backend/app/api/usage.py`; Test `backend/tests/test_llm_client.py`.
+**Files:** Modify `backend/app/llm/client.py`, `backend/app/llm/prompts.py`, `backend/app/api/usage.py`; Test `backend/tests/test_llm.py`.
 
-**Interfaces:** Existing `chat_json(session_id, system, messages, schema) -> LLMResult`; `LLMResult(ok: bool, data, error_fa: str | None)`; `embed(session_id, texts) -> list[list[float]]`.
+**Interfaces (preserve existing synchronous contracts):** `chat_json(session_id, messages, schema, model=None, temperature=0.0) -> LLMResult`; `LLMResult(ok, data, error: LLMError | None)` with `error.kind/message`; `embed(session_id, texts, model=None) -> LLMResult` (vectors in `.data`). System instructions are message entries, not a separate positional argument. Callers translate sanitized error kinds into Persian responses. Schema instructions start on attempt one; at most one repair shares an 8-second budget. SDK retries remain disabled. Exact-model pricing is operator-configured; missing usage/prices are incomplete estimates, never verified free calls.
 
 - [ ] **Step 1:** Tests with a fake transport: `test_malformed_json_retries_once_then_graceful`, `test_timeout_returns_persian_error`, `test_usage_accumulates_per_session`, `test_no_content_logged` (caplog contains no message text).
 - [ ] **Step 2:** Run; expect FAIL where behaviour is missing.
@@ -194,11 +205,11 @@ Goal: everyone runs the skeleton and agrees on contracts.
 
 **Files:** Modify `backend/app/careers/conversation.py`, `backend/app/api/chat.py`, `backend/app/api/roadmap.py`; Test `backend/tests/test_conversation.py`.
 
-**Interfaces:** Produces `advance(session_id: str, message: str) -> ChatResponse` and `correct(session_id: str, message: str) -> Roadmap`. Consumes `sanitize_profile`, `compute_roadmap`.
+**Interfaces (preserve current API):** `handle_message(session: SessionState, message: str) -> ChatResponse` and `apply_correction(session: SessionState, message: str) -> CareerProfile` (candidate only). Existing `/chat` and `/roadmap/correct` routers call these functions. The correction router computes the real graph, then commits profile/evidence transactionally. Do not introduce `advance`, `correct`, or another session store.
 
 - [ ] **Step 1:** Tests (LLM faked): `test_stops_at_six_questions`, `test_profile_ids_validated_against_taxonomy`, `test_correction_excel_moves_known_to_todo` ("من اکسل بلد نیستم"), `test_llm_failure_returns_friendly_reply`.
 - [ ] **Step 2:** Run; FAIL.
-- [ ] **Step 3:** State machine: LLM asks the next question until profile fields are filled or 6 questions asked, then emits `CareerProfile` JSON (extract model). Correction = LLM returns a delta on `known_concepts`; apply deterministically and recompute.
+- [ ] **Step 3:** State machine: one `chat_json` observation call per turn using the chat model, then Python selects one focused Persian question or publishes a complete validated profile. Private observations distinguish practical known, heard-only, and explicit unknown skills; no forced completion after six questions. Resolve conflicts against P1's known prerequisite closure. Corrections use a typed patch; preserve unrelated fields, treat repeated accepted corrections as idempotent, and commit only after real graph success. An Excel denial with a still-known dependent returns a clear conflict and preserves prior state.
 - [ ] **Step 4:** Pass; manually run demo scenarios 1 & 2 on the real LLM.
 - [ ] **Step 5:** Commit.
 
@@ -213,10 +224,10 @@ Goal: everyone runs the skeleton and agrees on contracts.
 
 **Files:** Modify `backend/app/jobs/resume_parser.py`, `backend/app/jobs/normalize.py`, `backend/app/api/resume.py`; Test `backend/tests/test_resume.py` (+ tiny sample PDF/DOCX in `backend/tests/data/`).
 
-**Interfaces:** Produces `extract_text(filename: str, data: bytes) -> str` (raises `ResumeError` with a Persian message), `parse_resume(session_id, text) -> ResumeProfile | None`, `normalize_fa(text: str) -> str`, `map_skills(skills: list[str]) -> list[str]` (concept ids, aliases + fuzzy).
+**Interfaces (preserve current API):** `extract_text(filename: str, data: bytes) -> str`, `parse_resume(session_id: str, text: str) -> ResumeProfile`, `normalize_text(text: str) -> str`, `map_skills(skills: list[str], taxonomy: Taxonomy) -> list[str]`. Controlled failures use `P2Error` with a safe Persian message and an HTTP status mapping. No `ResumeError`, nullable parse return, or `normalize_fa` alias is required. Match exact normalized IDs/labels/aliases from the live taxonomy; drop ambiguous/unmatched labels, with no fuzzy or substring guessing. Preserve technical punctuation and raw skill labels. Unknown experience remains null privately and returns an incomplete outcome because the frozen public field cannot represent null.
 
-- [ ] **Step 1:** Tests: `test_extracts_pdf_and_docx_persian_english`, `test_empty_pdf_raises_resumeerror`, `test_arabic_letters_normalised` ("پايتون" → python), `test_map_skills_aliases` ("Excel", "اکسل" → `excel`), `test_oversize_file_rejected` (>5 MB).
-- [ ] **Step 2:** FAIL. **Step 3:** implement (PyMuPDF/python-docx, hazm normaliser, alias dict from taxonomy, size/type checks, in-memory only). **Step 4:** PASS. **Step 5:** commit.
+- [ ] **Step 1:** Tests: `test_extracts_pdf_and_docx_persian_english`, `test_invalid_documents` / `test_empty_scanned_and_encrypted`, `test_arabic_letters_normalised` ("پايتون" → `python_basics`), `test_map_skills_aliases` ("Excel", "اکسل" → `excel`), `test_oversize_file_rejected` (>5 MB).
+- [ ] **Step 2:** FAIL. **Step 3:** implement (PyMuPDF/python-docx, Hazm-compatible normalisation, alias dict from taxonomy, DOCX paragraphs and tables in document order, size/type checks, bounded reads with reliable close, threadpool offload, and session commit only on success). Framework multipart uploads can spool before endpoint execution; extracted text/profiles are never persisted. **Step 4:** PASS. **Step 5:** commit.
 
 **Optional:** OCR fallback for scanned PDFs (pytesseract + `fas` language pack) — document as limitation if skipped.
 
@@ -227,7 +238,7 @@ Goal: everyone runs the skeleton and agrees on contracts.
 **Interfaces:** Produces `Source.fetch() -> list[JobPosting]` per adapter; `dedup(postings: list[JobPosting]) -> list[JobPosting]`; `store.load_postings() -> list[JobPosting]`.
 
 - [ ] **Step 1:** Tests: `test_respects_robots_disallow`, `test_min_2s_between_requests_per_host` (fake clock), `test_user_agent_sent`, `test_dedup_same_job_two_sources`, `test_dedup_keeps_distinct_jobs`.
-- [ ] **Step 2:** FAIL. **Step 3:** pick sources that publish a public API or allow scraping (check robots.txt/terms first); parse to normalised schema incl. `skill_ids` via `map_skills`, `seniority`, `remote`. Dedup key = normalised (title, company, location) with fuzzy ratio threshold.
+- [ ] **Step 2:** FAIL. **Step 3:** pick sources that publish a public API or allow scraping (check robots.txt/terms first); parse to normalised schema incl. `skill_ids` via `map_skills(raw_skills, get_taxonomy())`, plus `seniority` and `remote`. Dedup key = normalised (title, company, location) with fuzzy ratio threshold.
 - [ ] **Step 4:** Run `make collect` → ≥50 deduped postings in `data/jobs/postings.jsonl`; record counts per source in README "Data sources". **By 11:00.**
 - [ ] **Step 5:** Commit (raw cache stays git-ignored).
 
@@ -310,6 +321,26 @@ Goal: everyone runs the skeleton and agrees on contracts.
 ## Self-Review Notes
 
 - **Spec coverage:** every RFP requirement (A-01..A-11, B-01..B-11, NF-01..NF-08, section 10.2) maps to a task in the reconciliation table; deliverables (section 7) are in Task 4.2.
-- **Repo docs drift:** `docs/TASKS.md` and `claude_code_prompt.md` use IDs/priorities that differ from the RFP (e.g. robustness is NF-06 not NF-05; A-08 is Should; voice A-10 and integration B-10 are bonus; A-11 is export). Task 0.1 Step 3b fixes `TASKS.md`.
-- **Key risk to resolve first:** the sibling `taxonomy/` folder duplicates P1 work in a different format (JSON vs skeleton YAML); Task 1.1 Step 3 must settle this on day one.
+- **Repo docs drift:** `docs/TASKS.md` is now reconciled; the historical `claude_code_prompt.md` still uses IDs/priorities that differ from the RFP (e.g. robustness is NF-06 not NF-05; A-08 is Should; voice A-10 and integration B-10 are bonus; A-11 is export). Task 0.1 Step 3b is reflected in `TASKS.md`; runtime acceptance remains unverified.
+- **P1 source settled:** merged P1 uses the expanded YAML taxonomy and real graph/resource implementations. Keep those implementations; no second taxonomy conversion or engine is needed for P2.
 - **Windows note:** Makefile hard-codes `python3.12` and `.venv/bin`; fix in Task 0.1 or use Docker/WSL.
+
+
+## P2 compatibility review and verification status
+
+- [x] Read this plan against the merged P1 code and current P2 changes; preserve public schemas and synchronous call contracts.
+- [x] Reconcile the outdated client, conversation, taxonomy/resource, and resume interface descriptions above.
+- [x] Correct RFP identifiers/priorities in `docs/TASKS.md` using this plan's reconciliation table.
+- [x] Implement idempotent positive/heard/negative corrections; still reject unsupported evidence and prerequisite conflicts.
+- [x] Add `backend/tests/test_p2_p1_integration.py` for real P1 alias mapping, chat → graph, repeated correction, summary preservation, and prerequisite-conflict rollback (model mocked only).
+- [ ] Run focused and full backend suites successfully: currently blocked during setup by missing `pydantic_settings`.
+- [ ] Run taxonomy validation and app import successfully: blocked by the same missing dependency.
+- [ ] Opt-in organiser-gateway smoke test and measured chat latency/cost: not run; synthetic data and explicit live-test authorization required.
+
+Syntax compilation and `git diff --check` are the available static checks, not runtime
+integration evidence. Dependency installation was retried but could not obtain
+`pydantic-settings`; PyMuPDF, python-docx, and networkx are also absent from this environment.
+P1 integration code is now present, so the old missing-branch blocker no longer applies.
+`make test` additionally depends on the host's unavailable Xcode command-line tools.
+See `docs/REPORT.md` for commands and frozen-contract limitations. Optional voice, OCR,
+job collection/ranking, frontend polish, and deployment changes are outside this P2 review.

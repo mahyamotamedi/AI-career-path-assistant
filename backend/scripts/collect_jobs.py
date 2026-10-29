@@ -12,7 +12,7 @@ from app.careers.taxonomy import get_taxonomy
 from app.jobs import dedup, store
 from app.jobs.collector.base import PoliteFetcher
 from app.jobs.collector.sources import jobinja, jobvision
-from app.jobs.normalize import map_skills, normalize_text
+from app.jobs.normalize import map_text_skills, normalize_text
 from app.schemas import JobPosting
 
 SOURCES = [jobinja, jobvision]
@@ -27,7 +27,7 @@ def unmapped_phrases(postings: list[JobPosting], top: int = 30) -> list[tuple[st
     for p in postings:
         seen: set[str] = set()
         for line in p.requirements:
-            if map_skills([line], tax):
+            if map_text_skills([line], tax):
                 continue
             n = normalize_text(line)
             words = re.findall(r"[\w+#./]+", n)

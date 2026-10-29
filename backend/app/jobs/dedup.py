@@ -8,7 +8,7 @@ FUZZY_TITLE = 90
 
 def _key(text: str) -> str:
     """Normalised, space-free form: 'دیجی‌کالا' and 'دیجی کالا' compare equal."""
-    return normalize_text(text).replace(" ", "")
+    return normalize_text(text).replace("\u200c", "").replace(" ", "")
 
 
 def _better(a: JobPosting, b: JobPosting) -> JobPosting:

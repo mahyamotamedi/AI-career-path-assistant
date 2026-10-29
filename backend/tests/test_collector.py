@@ -60,3 +60,10 @@ def test_common_helpers():
     assert common.detect_seniority("برنامه‌نویس") is None
     assert common.years_from_text("سه تا شش سال") == 3 and common.years_from_text("بدون سابقه") == 0
     assert common.jalali_to_iso("1405/07/20") == "2026-10-12"
+
+
+def test_unmapped_report_uses_sentence_skills():
+    from scripts.collect_jobs import unmapped_phrases
+    p = JobPosting(id="sentence", source="test", title="Analyst", company="test", location="تهران",
+                   requirements=["تسلط به SQL و Power BI", "xyzzy"], url="https://example.test/job")
+    assert unmapped_phrases([p]) == [("xyzzy", 1)]

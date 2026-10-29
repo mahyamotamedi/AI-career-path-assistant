@@ -16,7 +16,7 @@ from bs4 import BeautifulSoup
 from app.careers.taxonomy import get_taxonomy
 from app.jobs.collector.base import PoliteFetcher
 from app.jobs.collector.sources import common
-from app.jobs.normalize import clean_text, map_skills
+from app.jobs.normalize import clean_text, map_text_skills
 from app.schemas import JobPosting
 
 log = logging.getLogger(__name__)
@@ -103,7 +103,7 @@ def parse_detail(html: str, job_id: int, years: int | None = None) -> JobPosting
             location=common.canonical_city(city) or "نامشخص",
             remote=bool(d.get("isRemote")) or common.detect_remote(text),
             seniority=seniority, requirements=requirements,
-            skill_ids=map_skills(requirements + [title], get_taxonomy()),
+            skill_ids=map_text_skills(requirements + [title], get_taxonomy()),
             published_at=published[:10] or None, url=url,
         )
     except ValueError as e:

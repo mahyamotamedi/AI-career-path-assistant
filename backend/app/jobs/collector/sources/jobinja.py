@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 from app.careers.taxonomy import get_taxonomy
 from app.jobs.collector.base import PoliteFetcher
 from app.jobs.collector.sources import common
-from app.jobs.normalize import clean_text, map_skills, normalize_text
+from app.jobs.normalize import clean_text, map_text_skills, normalize_text
 from app.schemas import JobPosting
 
 log = logging.getLogger(__name__)
@@ -109,7 +109,7 @@ def parse_detail(html: str, url: str) -> JobPosting | None:
             remote=common.detect_remote(" ".join(lines) + " " + title),
             seniority=common.detect_seniority(title, years),
             requirements=requirements,
-            skill_ids=map_skills(requirements + [title], tax),
+            skill_ids=map_text_skills(requirements + [title], tax),
             published_at=ld.get("datePosted") or None,
             url=url,
         )

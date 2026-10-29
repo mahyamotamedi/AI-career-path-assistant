@@ -11,16 +11,18 @@ class Settings(BaseSettings):
     # LLM gateway (OpenAI-compatible). Keys stay server-side.
     llm_base_url: str = ""
     llm_api_key: str = ""
-    chat_model: str = "gpt-4o-mini"
-    extract_model: str = "gpt-4o-mini"
-    embed_model: str = "text-embedding-3-small"
+    chat_model: str = ""
+    extract_model: str = ""
+    embed_model: str = ""
     llm_timeout_s: float = 30.0
 
-    # USD per 1M tokens: model -> (prompt, completion). "default" is the fallback.
-    price_table: dict[str, tuple[float, float]] = {
-        "default": (0.15, 0.60),
-        "text-embedding-3-small": (0.02, 0.0),
-    }
+    # One shared budget across JSON attempts, including repair. No capability probes.
+    llm_json_budget_s: float = 8.0
+    llm_send_temperature: bool = False
+    llm_json_mode: bool = True
+    # Operator-provided estimates in USD per million tokens; no unknown-model fallback.
+    price_table: dict[str, tuple[float, float]] = {}
+    price_basis: str = "operator configured estimates; not billing data"
 
     # Scraper politeness
     scraper_user_agent: str = "CareerPathHackathonBot/0.1 (+contact: team@example.com)"

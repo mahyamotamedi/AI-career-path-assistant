@@ -1,7 +1,8 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 from app.careers import conversation, graph
 from app.careers.taxonomy import get_taxonomy
+from app.llm.errors import P2Error
 from app.schemas import CareerProfile, CorrectionRequest, Roadmap
 from app.session import get_session
 from app.stubs import load_fixture, run_or_stub
@@ -23,7 +24,23 @@ def correct_roadmap(req: CorrectionRequest) -> Roadmap:
     session = get_session(req.session_id)
 
     def real() -> Roadmap:
-        session.profile = conversation.apply_correction(session, req.message)
-        return graph.compute_roadmap(session.profile, get_taxonomy())
+        with session.lock:
+            previous = session.profile
+            draft = session.draft
+            try:
+                candidate = conversation.apply_correction(session, req.message)
+                result = Roadmap.model_validate(graph.compute_roadmap(candidate, get_taxonomy()))
+            except Exception:
+                session.profile, session.draft = previous, draft
+                raise
+            session.profile = CareerProfile.model_validate(candidate.model_dump())
+            session.draft = {**candidate.model_dump(), "knowledge_complete": True,
+                             "evidence": getattr(candidate, "_evidence", {})}
+            return result
 
-    return run_or_stub(real, _stub_roadmap)
+    try:
+        return run_or_stub(real, _stub_roadmap)
+    except P2Error as exc:
+        raise HTTPException(exc.status_code, str(exc)) from None
+    except (ValueError, RuntimeError):
+        raise HTTPException(422, "بازسازی نقشه ممکن نشد؛ پروفایل قبلی حفظ شد.") from None

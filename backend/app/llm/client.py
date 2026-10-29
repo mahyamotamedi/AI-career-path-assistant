@@ -1,23 +1,18 @@
-"""OpenAI-compatible gateway wrapper.
-
-All functions return an LLMResult instead of raising, so callers can degrade
-gracefully. Prompts/responses are never logged (privacy).
-"""
+"""Synchronous organiser-gateway wrapper. No content or exception strings are logged."""
 import json
-import logging
+import math
 import re
+import time
 from dataclasses import dataclass
 from typing import Any, Literal, TypeVar
 
-from openai import OpenAI
+from openai import OpenAI, OpenAIError
 from pydantic import BaseModel, ValidationError
 
 from app.config import settings
 from app.session import get_session
 
-log = logging.getLogger("llm")
 T = TypeVar("T", bound=BaseModel)
-
 ErrorKind = Literal["not_configured", "timeout", "bad_json", "api"]
 
 
@@ -30,68 +25,102 @@ class LLMError:
 @dataclass
 class LLMResult:
     ok: bool
-    data: Any = None  # str for chat, validated model for chat_json, list[list[float]] for embed
+    data: Any = None
     error: LLMError | None = None
 
 
 _client: OpenAI | None = None
+_client_config: tuple | None = None
 
 
 def _get_client() -> OpenAI | None:
-    global _client
-    if not settings.llm_api_key:
+    global _client, _client_config
+    if not settings.llm_api_key.strip() or not settings.llm_base_url.strip():
         return None
-    if _client is None:
-        _client = OpenAI(
-            base_url=settings.llm_base_url or None,
-            api_key=settings.llm_api_key,
-            timeout=settings.llm_timeout_s,
-            max_retries=0,
-        )
+    config = (settings.llm_base_url, settings.llm_api_key, settings.llm_timeout_s)
+    if _client is None or _client_config != config:
+        _client = OpenAI(base_url=config[0], api_key=config[1], timeout=config[2], max_retries=0)
+        _client_config = config
     return _client
 
 
-def _record_usage(session_id: str, model: str, usage: Any) -> None:
-    if usage is None:
-        return
-    pt = getattr(usage, "prompt_tokens", 0) or 0
-    ct = getattr(usage, "completion_tokens", 0) or 0
-    price_in, price_out = settings.price_table.get(model, settings.price_table["default"])
-    u = get_session(session_id).usage
-    u.prompt_tokens += pt
-    u.completion_tokens += ct
-    u.calls += 1
-    u.est_cost_usd = round(u.est_cost_usd + (pt * price_in + ct * price_out) / 1e6, 6)
+def _failure(kind: ErrorKind) -> LLMResult:
+    return LLMResult(False, error=LLMError(kind, kind))
 
 
 def _classify(exc: Exception) -> LLMError:
-    name = type(exc).__name__
-    kind: ErrorKind = "timeout" if "Timeout" in name else "api"
-    return LLMError(kind, name)  # type name only: messages may echo user content
+    # SDK messages can contain prompts or keys. Never forward them.
+    kind: ErrorKind = "timeout" if "Timeout" in type(exc).__name__ else "api"
+    return LLMError(kind, kind)
 
 
-def chat(
-    session_id: str,
-    messages: list[dict],
-    model: str | None = None,
-    temperature: float = 0.3,
-    json_mode: bool = False,
-) -> LLMResult:
-    client = _get_client()
-    if client is None:
-        return LLMResult(False, error=LLMError("not_configured", "LLM_API_KEY is not set"))
-    model = model or settings.chat_model
-    kwargs: dict[str, Any] = {}
-    if json_mode:
-        kwargs["response_format"] = {"type": "json_object"}
+def _attempt(session_id: str) -> None:
+    session = get_session(session_id)
+    with session.usage_lock:
+        session.usage.calls += 1
+
+
+def _record_usage(session_id: str, model: str, usage: Any) -> None:
+    session = get_session(session_id)
+    with session.usage_lock:
+        if usage is None:
+            session.usage_complete = session.cost_complete = False
+            return
+        pt = getattr(usage, "prompt_tokens", None)
+        ct = getattr(usage, "completion_tokens", 0)
+        if not isinstance(pt, int) or not isinstance(ct, int) or pt < 0 or ct < 0:
+            session.usage_complete = session.cost_complete = False
+            return
+        session.usage.prompt_tokens += pt
+        session.usage.completion_tokens += ct
+        price = settings.price_table.get(model)
+        if price is None or any(not math.isfinite(p) or p < 0 for p in price):
+            session.cost_complete = False
+            return
+        session.usage.est_cost_usd += (pt * price[0] + ct * price[1]) / 1e6
+
+
+def chat(session_id: str, messages: list[dict], model: str | None = None,
+         temperature: float = 0.3, json_mode: bool = False,
+         *, timeout_s: float | None = None) -> LLMResult:
+    model = settings.chat_model if model is None else model
+    if not model.strip():
+        return _failure("not_configured")
     try:
-        resp = client.chat.completions.create(
-            model=model, messages=messages, temperature=temperature, **kwargs
-        )
-    except Exception as exc:  # noqa: BLE001 - convert every failure to an error object
+        client = _get_client()
+    except (ValueError, TypeError, RuntimeError, OSError, OpenAIError):
+        return _failure("not_configured")
+    if client is None:
+        return _failure("not_configured")
+    kwargs: dict[str, Any] = {"timeout": min(settings.llm_timeout_s, timeout_s or settings.llm_timeout_s)}
+    if kwargs["timeout"] <= 0:
+        return _failure("timeout")
+    if json_mode and settings.llm_json_mode:
+        kwargs["response_format"] = {"type": "json_object"}
+    if settings.llm_send_temperature:
+        kwargs["temperature"] = temperature
+    _attempt(session_id)
+    try:
+        resp = client.chat.completions.create(model=model, messages=messages, **kwargs)
+    except Exception as exc:  # External SDK boundary; programming errors below are not swallowed.
+        _record_usage(session_id, model, None)
         return LLMResult(False, error=_classify(exc))
-    _record_usage(session_id, model, resp.usage)
-    return LLMResult(True, data=resp.choices[0].message.content or "")
+    _record_usage(session_id, model, getattr(resp, "usage", None))
+    try:
+        choices = resp.choices
+        if not choices:
+            return _failure("api")
+        choice = choices[0]
+        if getattr(choice.message, "refusal", None):
+            return _failure("api")
+        if choice.finish_reason not in ("stop", None):
+            return _failure("api")
+        content = choice.message.content
+        if not isinstance(content, str) or not content.strip():
+            return _failure("api")
+        return LLMResult(True, data=content)
+    except (AttributeError, TypeError, IndexError):
+        return _failure("api")
 
 
 def _parse(text: str, schema: type[T]) -> T:
@@ -99,48 +128,53 @@ def _parse(text: str, schema: type[T]) -> T:
     return schema.model_validate(json.loads(text))
 
 
-def chat_json(
-    session_id: str,
-    messages: list[dict],
-    schema: type[T],
-    model: str | None = None,
-    temperature: float = 0.0,
-) -> LLMResult:
-    """JSON-mode call validated by `schema`; one repair retry on bad JSON."""
-    model = model or settings.extract_model
-    res = chat(session_id, messages, model, temperature, json_mode=True)
-    if not res.ok:
-        return res
-    try:
-        return LLMResult(True, data=_parse(res.data, schema))
-    except (json.JSONDecodeError, ValidationError) as exc:
-        problem = type(exc).__name__
-    repair = messages + [
-        {"role": "assistant", "content": res.data},
-        {
-            "role": "user",
-            "content": f"Your previous reply was invalid ({problem}). "
-            f"Reply again with ONLY valid JSON matching this schema: "
-            f"{json.dumps(schema.model_json_schema())}",
-        },
-    ]
-    res = chat(session_id, repair, model, temperature, json_mode=True)
-    if not res.ok:
-        return res
-    try:
-        return LLMResult(True, data=_parse(res.data, schema))
-    except (json.JSONDecodeError, ValidationError):
-        return LLMResult(False, error=LLMError("bad_json", "malformed JSON after retry"))
+def chat_json(session_id: str, messages: list[dict], schema: type[T],
+              model: str | None = None, temperature: float = 0.0) -> LLMResult:
+    model = settings.extract_model if model is None else model
+    deadline = time.monotonic() + settings.llm_json_budget_s
+    instruction = "Return only a JSON object matching this schema: " + json.dumps(schema.model_json_schema())
+    attempts = [{"role": "system", "content": instruction}, *messages]
+    for attempt in range(2):
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            return _failure("timeout")
+        res = chat(session_id, attempts, model, temperature, json_mode=True, timeout_s=remaining)
+        if not res.ok:
+            return res
+        try:
+            return LLMResult(True, data=_parse(res.data, schema))
+        except (json.JSONDecodeError, ValidationError, ValueError):
+            if attempt:
+                return _failure("bad_json")
+            attempts = [*attempts, {"role": "assistant", "content": res.data},
+                        {"role": "user", "content": "Invalid JSON/schema. Correct it using the schema above. Do not add facts."}]
+    return _failure("bad_json")
 
 
 def embed(session_id: str, texts: list[str], model: str | None = None) -> LLMResult:
-    client = _get_client()
+    model = settings.embed_model if model is None else model
+    if not model.strip():
+        return _failure("not_configured")
+    try:
+        client = _get_client()
+    except (ValueError, TypeError, RuntimeError, OSError, OpenAIError):
+        return _failure("not_configured")
     if client is None:
-        return LLMResult(False, error=LLMError("not_configured", "LLM_API_KEY is not set"))
-    model = model or settings.embed_model
+        return _failure("not_configured")
+    _attempt(session_id)
     try:
         resp = client.embeddings.create(model=model, input=texts)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
+        _record_usage(session_id, model, None)
         return LLMResult(False, error=_classify(exc))
-    _record_usage(session_id, model, resp.usage)
-    return LLMResult(True, data=[d.embedding for d in resp.data])
+    _record_usage(session_id, model, getattr(resp, "usage", None))
+    try:
+        rows = sorted(resp.data, key=lambda d: d.index)
+        if len(rows) != len(texts) or [d.index for d in rows] != list(range(len(texts))):
+            return _failure("api")
+        vectors = [d.embedding for d in rows]
+        if any(not v or any(not isinstance(x, (int, float)) or not math.isfinite(x) for x in v) for v in vectors):
+            return _failure("api")
+        return LLMResult(True, data=vectors)
+    except (AttributeError, TypeError, ValueError):
+        return _failure("api")

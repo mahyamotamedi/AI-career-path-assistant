@@ -31,21 +31,38 @@ def test_health():
     assert client.get("/api/health").json() == {"status": "ok"}
 
 
-def test_chat_stub_reaches_done_with_profile():
-    last = None
-    for _ in range(6):
-        last = client.post("/api/chat", json={"session_id": "t1", "message": "x"}).json()
-        if last["done"]:
-            break
-    assert last["done"] and last["profile"]["target_role"]
+def test_chat_real_p2_failure_is_safe():
+    # No keys/configuration: P2 must visibly fail, never complete through fixtures.
+    r = client.post("/api/chat", json={"session_id": "t1", "message": "سلام"})
+    assert r.status_code == 200 and not r.json()["done"]
+    assert r.json()["profile"] is None and r.json()["questions_asked"] == 0
 
 
-def test_roadmap_stub():
-    profile = _load("career_profile.json")
-    assert client.post("/api/roadmap", json=profile).status_code == 200
+def test_chat_reaches_done_with_mocked_observation(p1_boundary, monkeypatch):
+    from app.careers import conversation
+    from app.llm.client import LLMResult
+    observation = conversation.Observation(target_role="recruiter", target_level="junior",
+                                           beginner=True, knowledge_complete=True)
+    monkeypatch.setattr(conversation.client, "chat_json", lambda *a, **kw: LLMResult(True, observation))
+    result = client.post("/api/chat", json={"session_id":"chat-success", "message":"مبتدی هستم"})
+    assert result.json()["done"] and result.json()["profile"]["target_role"] == "recruiter"
 
 
-def test_resume_then_match_stub():
+def test_roadmap_endpoint_matches_real_p1(caplog):
+    from app.careers.graph import compute_roadmap
+    profile = CareerProfile(**_load("career_profile.json"))
+    result = client.post("/api/roadmap", json=profile.model_dump())
+    assert result.status_code == 200 and result.json() == compute_roadmap(profile).model_dump()
+    assert "STUB" not in caplog.text
+
+
+def test_resume_then_match_p3_boundary(monkeypatch):
+    from app.jobs import resume_parser, ranking
+    from app.llm.client import LLMResult
+    monkeypatch.setattr(resume_parser.client, "chat_json", lambda sid, messages, schema, **kw:
+                        LLMResult(True, schema(skills=["Python", "SQL"], years_experience=0)))
+    matches = [JobMatch(**m) for m in _load("job_matches.json")]
+    monkeypatch.setattr(ranking, "hybrid_rank", lambda *a, **kw: matches)
     import fitz
 
     doc = fitz.open()

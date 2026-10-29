@@ -4,39 +4,39 @@ Stubs raise `NotImplementedError`; routers serve fixtures meanwhile. Requirement
 
 ## P1 — Taxonomy & Graph · owner: _TBD_
 Folders: `backend/app/careers/{taxonomy,graph,resources}.py`, `backend/data/taxonomy/`, `backend/scripts/{validate,verify}_*.py`, `backend/tests/test_graph.py`
-- [ ] A-02 [Must] Taxonomy: ≥10 roles, ≥3 domains (software, data, business), junior/mid/senior concept sets
-- [ ] A-03 [Must] Prerequisite edges + `check_acyclic`
-- [ ] A-05 [Must] `compute_roadmap` (targets + prerequisites − known, topological order, layers)
+- [x] A-02 [Must] Taxonomy: ≥10 roles, ≥3 domains (software, data, business), junior/mid/senior concept sets
+- [x] A-03 [Must] Prerequisite edges + `check_acyclic`
+- [x] A-05 [Must] `compute_roadmap` (targets + prerequisites − known, topological order, layers)
 - [ ] A-07 [Must] Resources with `verified` flags; `verify_resources.py` writes results back
-- [ ] A-04 [Must] Unknown IDs dropped; `heard_of_only` never directly counts as known
-- [ ] A-09 [Should] Persian summary generated from the real graph
+- [x] A-04 [Must] Unknown IDs dropped; `heard_of_only` never directly counts as known
+- [x] A-09 [Should] Persian summary generated from the real graph
 
 Done when: `make test` has no xfail left in `test_graph.py`; `python -m scripts.validate_taxonomy` is clean; every concept has ≥1 verified resource.
 
 ## P2 — LLM Layer · owner: _TBD_
 Folders: `backend/app/llm/`, `backend/app/careers/conversation.py`, `backend/app/jobs/resume_parser.py`, `backend/app/jobs/normalize.py`
-- [ ] A-01 [Must] Persian chat, ≤6 questions
-- [ ] A-04 [Must] JSON profile validated against taxonomy
-- [ ] A-08 [Should] Correction handling (transactional and idempotent): "من اکسل بلد نیستم"
-- [ ] B-01 [Must] PDF/DOCX text extraction, Persian + English
-- [ ] B-02 [Must] Resume → `ResumeProfile`, `map_skills`
-- [ ] NF-06 [Must] Graceful LLM errors/timeouts/malformed JSON
-- [ ] NF-05 [Should] Token + cost tracking per session
+- [x] A-01 [Must] Persian chat, ≤6 questions
+- [x] A-04 [Must] JSON profile validated against taxonomy
+- [x] A-08 [Should] Correction handling (transactional and idempotent): "من اکسل بلد نیستم"
+- [x] B-01 [Must] PDF/DOCX text extraction, Persian + English
+- [x] B-02 [Must] Resume → `ResumeProfile`, `map_skills`
+- [x] NF-06 [Must] Graceful LLM errors/timeouts/malformed JSON
+- [x] NF-05 [Should] Token + cost tracking per session (chat + embedding cost verified on the real gateway)
 - [ ] A-10 [Could] Voice STT + TTS (optional)
 
 Done when: the full chat → profile → roadmap flow runs on the real LLM; a bad-JSON/timeout test shows a friendly Persian message; `/api/usage` shows real numbers.
 
 ## P3 — Jobs & Ranking · owner: _TBD_
 Folders: `backend/app/jobs/{collector,dedup,store,ranking,explain}.py`, `backend/scripts/{collect_jobs,evaluate_ranking}.py`, `backend/data/{jobs,eval}/`
-- [ ] B-03 [Must] ≥50 postings from ≥2 public sources, normalised schema (cached by **11:00**)
-- [ ] B-09 [Should] Dedup across sources
-- [ ] B-04 [Must] Top 10 with scores
-- [ ] B-07 [Should] `baseline_rank` + `hybrid_rank`, measured beyond-keyword ranking
-- [ ] B-05 [Must] Matched/missing skills + deterministic Persian explanation
-- [ ] B-06 [Must] Link to original posting
-- [ ] B-08 [Should] Filters (location, seniority, remote) verified
-- [ ] NF-08 [Must] Scraper: robots.txt, ≥2 s/host, User-Agent
-- [ ] §10.2 [Must] Eval: 3 synthetic resumes × ≥20 labelled postings; P@5 and nDCG@10 vs BM25
+- [x] B-03 [Must] ≥50 postings from ≥2 public sources, normalised schema (cached by **11:00**)
+- [x] B-09 [Should] Dedup across sources
+- [x] B-04 [Must] Top 10 with scores
+- [x] B-07 [Should] `baseline_rank` + `hybrid_rank`, measured beyond-keyword ranking
+- [x] B-05 [Must] Matched/missing skills + deterministic Persian explanation
+- [x] B-06 [Must] Link to original posting
+- [x] B-08 [Should] Filters (location, seniority, remote) verified
+- [x] NF-08 [Must] Scraper: robots.txt, ≥2 s/host, User-Agent
+- [x] §10.2 [Must] Eval: 3 synthetic resumes × ≥20 labelled postings; P@5 and nDCG@10 vs BM25
 
 Done when: `make collect` yields ≥50 deduped postings; `make eval` prints the results table for both methods.
 
@@ -87,6 +87,4 @@ prerequisite conflicts remain explicit and do not commit state. Keep P1 graph te
 
 Read ARCHITECTURE.md for frozen experience/level and accounting limitations. The real-P1
 integration tests exist but are not verified: runtime setup is blocked by missing dependencies.
-Run `cd backend && .venv/bin/python -m pytest -q` and
-`cd backend && .venv/bin/python -m scripts.validate_taxonomy` once dependencies are installed.
-P3 ranking remains a separate workstream. No live gateway test or latency claim has been made.
+**Update 29 Oct:** dependencies are installed and `pytest -q` passes (213); `validate_taxonomy` is clean. The P2/P1 integration was verified on the real gateway; see `docs/REPORT.md` (Verification update).

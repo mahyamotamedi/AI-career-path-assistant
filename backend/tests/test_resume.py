@@ -15,25 +15,30 @@ client = TestClient(app)
 
 
 def pdf_bytes(text="Python SQL"):
-    """Text PDF with explicit Unicode CMap; no image or system-font dependency."""
-    stream = b"BT /F1 12 Tf 72 720 Td <" + text.encode("utf-16-be").hex().encode() + b"> Tj ET"
-    cmap = b"/CIDInit /ProcSet findresource begin 12 dict begin begincmap /CIDSystemInfo << /Registry (Adobe) /Ordering (UCS) /Supplement 0 >> def /CMapName /Test def /CMapType 2 def 1 begincodespacerange <0000> <FFFF> endcodespacerange 1 beginbfrange <0000> <FFFF> <0000> endbfrange endcmap CMapName currentdict /CMap defineresource pop end end"
+    """Text PDF: simple Type1 font + ToUnicode (one byte code per distinct character).
+    Extractable Unicode with no embedded font file and no system-font dependency."""
+    chars = sorted(set(text))
+    # PDFs store RTL words in visual order: reverse the characters of each Persian word, keep word order
+    rtl = lambda w: any('\u0600' <= c <= '\u06ff' for c in w)
+    shown = ' '.join(w[::-1] if rtl(w) else w for w in text.split(' '))
+    codes = {c: i + 1 for i, c in enumerate(chars)}
+    stream = b"BT /F1 12 Tf 72 720 Td <" + bytes(codes[c] for c in shown).hex().encode() + b"> Tj ET"
+    bfchar = "".join(f"<{codes[c]:02X}> <{ord(c):04X}>\n" for c in chars).encode()
+    cmap = (b"/CIDInit /ProcSet findresource begin 12 dict begin begincmap /CMapName /T def /CMapType 2 def\n"
+            b"1 begincodespacerange <00> <FF> endcodespacerange\n" + str(len(chars)).encode() + b" beginbfchar\n"
+            + bfchar + b"endbfchar\nendcmap CMapName currentdict /CMap defineresource pop end end")
     objects = [b"<< /Type /Catalog /Pages 2 0 R >>",
       b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-      b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 6 0 R >>",
-      b"<< /Type /Font /Subtype /Type0 /BaseFont /TestFont /Encoding /Identity-H /DescendantFonts [5 0 R] /ToUnicode 7 0 R >>",
-      b"<< /Type /Font /Subtype /CIDFontType2 /BaseFont /TestFont /CIDSystemInfo << /Registry (Adobe) /Ordering (Identity) /Supplement 0 >> /DW 500 >>",
+      b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
+      b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /ToUnicode 6 0 R >>",
       b"<< /Length " + str(len(stream)).encode() + b" >>\nstream\n" + stream + b"\nendstream",
       b"<< /Length " + str(len(cmap)).encode() + b" >>\nstream\n" + cmap + b"\nendstream"]
-    data = b"%PDF-1.4\n"
-    offsets = [0]
+    data = b"%PDF-1.4\n"; offsets = []
     for i, obj in enumerate(objects, 1):
-        offsets.append(len(data))
-        data += str(i).encode() + b" 0 obj\n" + obj + b"\nendobj\n"
+        offsets.append(len(data)); data += str(i).encode() + b" 0 obj\n" + obj + b"\nendobj\n"
     start = len(data)
-    data += b"xref\n0 8\n0000000000 65535 f \n"
-    data += b"".join(f"{offset:010} 00000 n \n".encode() for offset in offsets[1:])
-    return data + f"trailer\n<< /Size 8 /Root 1 0 R >>\nstartxref\n{start}\n%%EOF".encode()
+    data += b"xref\n0 7\n0000000000 65535 f \n" + b"".join(f"{o:010} 00000 n \n".encode() for o in offsets)
+    return data + f"trailer\n<< /Size 7 /Root 1 0 R >>\nstartxref\n{start}\n%%EOF".encode()
 
 
 def docx_bytes():

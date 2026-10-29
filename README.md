@@ -13,6 +13,7 @@ docker compose up        # backend :8000, frontend :5173
 ```
 
 Without Docker: `make install && make dev`. Other targets: `make test`, `make collect`, `make eval`.
+`make eval` ranks the frozen 80-posting snapshot for 3 synthetic resumes with BM25 and the hybrid ranker, prints P@5 / nDCG@10 and the top 5 per method, and writes `backend/data/eval/results.md`. Hybrid numbers need `LLM_BASE_URL`, `LLM_API_KEY` and `EMBED_MODEL` in `.env`; without them it runs on skill overlap + seniority only and says so.
 Until the real components exist, every endpoint falls back to `backend/data/fixtures/` (look for `STUB` in the logs).
 
 ## Endpoints (`/api`)
